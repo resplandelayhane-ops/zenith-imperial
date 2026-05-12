@@ -599,9 +599,16 @@
 
     <!-- AÇÕES SECUNDÁRIAS -->
     <div class="actions-row">
-        <button class="btn-action" onclick="clearEditor()">Limpar Manuscrito</button>
+        <button class="btn-action" onclick="salvarCapitulo()" style="border-color:var(--gold-dark);color:var(--gold)">Salvar Capítulo</button>
         <button class="btn-action" onclick="copyText()">Copiar Texto</button>
         <button class="btn-action" onclick="exportTxt()">Exportar .txt</button>
+        <button class="btn-action" onclick="clearEditor()">Limpar Editor</button>
+    </div>
+
+    <!-- LISTA DE CAPÍTULOS DO LIVRO ATUAL -->
+    <div id="chapters-panel" style="margin-top:32px;display:none;">
+        <div class="editor-label">Capítulos Salvos</div>
+        <div id="chapters-list" style="margin-top:8px;"></div>
     </div>
 
 </div>
@@ -613,7 +620,7 @@
 //  ZENITH IMPERIAL — Engine v2
 // ═══════════════════════════════════════════════════════
 
-const CHAVE_API = "AIzaSyAoJadxmE-wl1LT-FBxJujIq4TjuBMLEYY";
+const CHAVE_API = "AIzaSyChNTe3uGsmEN9mY39Pj8GK5Qo3sm_3nzI";
 
 let currentBookId = null;
 
@@ -640,104 +647,191 @@ function saveLibrary(lib) {
     localStorage.setItem('zenith_library', JSON.stringify(lib));
 }
 function genId() {
-    return 'book_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+    return 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
 }
 
+// ── NOVO LIVRO ─────────────────────────────────────────
 function newBook() {
     const id = genId();
     const lib = getLibrary();
     lib[id] = {
-        id,
-        title: 'Nova Obra',
+        id, title: 'Nova Obra',
         h1: '', h2: '', pov: 'Terceira Pessoa do Onisciente',
-        words: '1500', vibe: '', content: '',
+        words: '1500', vibe: '',
+        chapters: [],   // array de { id, num, title, content, savedAt }
         createdAt: Date.now()
     };
     saveLibrary(lib);
     loadBook(id);
     closeSidebar();
-    renderBookList();
     showToast('Nova obra criada');
 }
 
+// ── CARREGAR LIVRO ─────────────────────────────────────
 function loadBook(id) {
     const lib = getLibrary();
     const book = lib[id];
     if (!book) return;
     currentBookId = id;
 
-    document.getElementById('title').value = book.title || '';
-    document.getElementById('h1').value = book.h1 || '';
-    document.getElementById('h2').value = book.h2 || '';
-    document.getElementById('pov').value = book.pov || 'Terceira Pessoa do Onisciente';
-    document.getElementById('words').value = book.words || '1500';
-    document.getElementById('vibe').value = book.vibe || '';
-    document.getElementById('editor').innerText = book.content || '';
+    document.getElementById('title').value  = book.title || '';
+    document.getElementById('h1').value     = book.h1 || '';
+    document.getElementById('h2').value     = book.h2 || '';
+    document.getElementById('pov').value    = book.pov || 'Terceira Pessoa do Onisciente';
+    document.getElementById('words').value  = book.words || '1500';
+    document.getElementById('vibe').value   = book.vibe || '';
+    document.getElementById('editor').innerText = '';
     updateWordCount();
+    renderBookList();
+    renderChapters();
+}
+
+// ── SALVAR METADADOS DO LIVRO ──────────────────────────
+function saveData() {
+    if (!currentBookId) currentBookId = genId();
+    const lib = getLibrary();
+    if (!lib[currentBookId]) {
+        lib[currentBookId] = { id: currentBookId, chapters: [], createdAt: Date.now() };
+    }
+    lib[currentBookId].title  = document.getElementById('title').value || 'Sem título';
+    lib[currentBookId].h1     = document.getElementById('h1').value;
+    lib[currentBookId].h2     = document.getElementById('h2').value;
+    lib[currentBookId].pov    = document.getElementById('pov').value;
+    lib[currentBookId].words  = document.getElementById('words').value;
+    lib[currentBookId].vibe   = document.getElementById('vibe').value;
+    lib[currentBookId].savedAt = Date.now();
+    saveLibrary(lib);
     renderBookList();
 }
 
+// ── SALVAR CAPÍTULO ────────────────────────────────────
+function salvarCapitulo() {
+    const texto = document.getElementById('editor').innerText.trim();
+    if (!texto) { showToast('Escreva ou gere um capítulo primeiro!'); return; }
+    if (!currentBookId) saveData();
+
+    const lib = getLibrary();
+    const book = lib[currentBookId];
+    if (!book.chapters) book.chapters = [];
+
+    const num = book.chapters.length + 1;
+    const cap = {
+        id: genId(),
+        num,
+        title: `Capítulo ${num}`,
+        content: texto,
+        words: texto.split(/\s+/).filter(Boolean).length,
+        savedAt: Date.now()
+    };
+    book.chapters.push(cap);
+    book.savedAt = Date.now();
+    saveLibrary(lib);
+
+    // Limpa o editor para o próximo capítulo
+    document.getElementById('editor').innerText = '';
+    updateWordCount();
+    renderBookList();
+    renderChapters();
+    showToast(`Capítulo ${num} salvo! Editor pronto para o próximo.`);
+}
+
+// ── RENDERIZAR CAPÍTULOS ───────────────────────────────
+function renderChapters() {
+    const panel = document.getElementById('chapters-panel');
+    const list  = document.getElementById('chapters-list');
+    if (!currentBookId) { panel.style.display = 'none'; return; }
+
+    const lib  = getLibrary();
+    const book = lib[currentBookId];
+    const caps = book?.chapters || [];
+
+    if (caps.length === 0) { panel.style.display = 'none'; return; }
+
+    panel.style.display = 'block';
+    list.innerHTML = caps.map(c => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--dim);">
+            <div onclick="lerCapitulo('${c.id}')" style="cursor:pointer;flex:1;">
+                <div style="font-family:Cinzel,serif;font-size:0.72rem;color:var(--bright);letter-spacing:1px;">${c.title}</div>
+                <div style="font-size:0.6rem;color:var(--gold-dark);margin-top:3px;">${c.words.toLocaleString('pt-BR')} palavras</div>
+            </div>
+            <button onclick="deletarCapitulo('${c.id}')" style="background:none;border:none;color:#5a3a1a;cursor:pointer;font-size:0.85rem;padding:4px 8px;" title="Apagar">✕</button>
+        </div>`).join('');
+}
+
+// ── LER CAPÍTULO ───────────────────────────────────────
+function lerCapitulo(capId) {
+    const lib  = getLibrary();
+    const book = lib[currentBookId];
+    const cap  = book?.chapters?.find(c => c.id === capId);
+    if (!cap) return;
+
+    const editorAtual = document.getElementById('editor').innerText.trim();
+    if (editorAtual) {
+        if (!confirm('O editor tem texto não salvo. Substituir para ver este capítulo?')) return;
+    }
+    document.getElementById('editor').innerText = cap.content;
+    updateWordCount();
+    window.scrollTo({ top: document.querySelector('.editor-wrap').offsetTop - 80, behavior: 'smooth' });
+    showToast(`Lendo: ${cap.title}`);
+}
+
+// ── DELETAR CAPÍTULO ───────────────────────────────────
+function deletarCapitulo(capId) {
+    if (!confirm('Apagar este capítulo? Não pode ser desfeito.')) return;
+    const lib  = getLibrary();
+    const book = lib[currentBookId];
+    book.chapters = book.chapters.filter(c => c.id !== capId);
+    // Renumerar
+    book.chapters.forEach((c, i) => { c.num = i+1; c.title = `Capítulo ${i+1}`; });
+    saveLibrary(lib);
+    renderChapters();
+    renderBookList();
+    showToast('Capítulo removido');
+}
+
+// ── DELETAR LIVRO ──────────────────────────────────────
 function deleteBook(id, e) {
     e.stopPropagation();
-    const lib = getLibrary();
+    const lib  = getLibrary();
     const name = lib[id]?.title || 'esta obra';
-    if (!confirm(`Apagar "${name}"? Esta ação não pode ser desfeita.`)) return;
+    if (!confirm(`Apagar "${name}" e todos os seus capítulos?`)) return;
     delete lib[id];
     saveLibrary(lib);
     if (currentBookId === id) {
         const remaining = Object.keys(lib);
         if (remaining.length > 0) loadBook(remaining[remaining.length - 1]);
-        else { currentBookId = null; clearFields(); }
+        else { currentBookId = null; clearFields(); document.getElementById('chapters-panel').style.display='none'; }
     }
     renderBookList();
     showToast('Obra removida');
 }
 
 function clearFields() {
-    ['title','h1','h2','vibe'].forEach(id => document.getElementById(id).value = '');
+    ['title','h1','h2','vibe'].forEach(i => document.getElementById(i).value = '');
     document.getElementById('editor').innerText = '';
     updateWordCount();
 }
 
-function saveData() {
-    if (!currentBookId) {
-        // Cria livro automaticamente no primeiro input
-        currentBookId = genId();
-    }
-    const lib = getLibrary();
-    if (!lib[currentBookId]) lib[currentBookId] = { id: currentBookId, createdAt: Date.now() };
-
-    lib[currentBookId].title   = document.getElementById('title').value || 'Sem título';
-    lib[currentBookId].h1      = document.getElementById('h1').value;
-    lib[currentBookId].h2      = document.getElementById('h2').value;
-    lib[currentBookId].pov     = document.getElementById('pov').value;
-    lib[currentBookId].words   = document.getElementById('words').value;
-    lib[currentBookId].vibe    = document.getElementById('vibe').value;
-    lib[currentBookId].content = document.getElementById('editor').innerText;
-    lib[currentBookId].savedAt = Date.now();
-
-    saveLibrary(lib);
-    renderBookList();
-}
-
+// ── RENDER LISTA DE LIVROS ─────────────────────────────
 function renderBookList() {
-    const lib = getLibrary();
-    const list = document.getElementById('book-list');
+    const lib   = getLibrary();
+    const list  = document.getElementById('book-list');
     const books = Object.values(lib).sort((a,b) => (b.savedAt||b.createdAt) - (a.savedAt||a.createdAt));
 
     if (books.length === 0) {
         list.innerHTML = '<div style="color:rgba(212,175,55,0.25);font-size:0.65rem;letter-spacing:2px;text-align:center;padding:32px 16px;font-family:Cinzel,serif">NENHUMA OBRA</div>';
         return;
     }
-
     list.innerHTML = books.map(b => {
-        const wordCount = b.content ? b.content.trim().split(/\s+/).filter(Boolean).length : 0;
+        const caps = b.chapters || [];
+        const capCount = caps.length;
+        const wordCount = caps.reduce((s, c) => s + (c.words || 0), 0);
         const isActive = b.id === currentBookId;
         return `
         <div class="book-item ${isActive ? 'active' : ''}" onclick="loadBook('${b.id}'); closeSidebar();">
             <div style="overflow:hidden">
                 <div class="book-item-title">${b.title || 'Sem título'}</div>
-                <div class="book-item-meta">${wordCount.toLocaleString('pt-BR')} palavras</div>
+                <div class="book-item-meta">${capCount} cap. · ${wordCount.toLocaleString('pt-BR')} palavras</div>
             </div>
             <button class="btn-del-book" onclick="deleteBook('${b.id}', event)" title="Apagar">✕</button>
         </div>`;
@@ -755,6 +849,17 @@ function closeSidebar() {
     document.getElementById('overlay').classList.remove('show');
 }
 
+// ── LIMPAR EDITOR (não apaga capítulos salvos) ─────────
+function clearEditor() {
+    const texto = document.getElementById('editor').innerText.trim();
+    if (!texto) { showToast('Editor já está vazio'); return; }
+    if (!confirm('Limpar o editor? Os capítulos já salvos não serão afetados.')) return;
+    document.getElementById('editor').innerText = '';
+    updateWordCount();
+    showToast('Editor limpo — capítulos salvos intactos');
+}
+
+
 // ── PROGRESS ───────────────────────────────────────────
 function setProgress(pct, label) {
     const wrap = document.getElementById('progress-wrap');
@@ -765,13 +870,11 @@ function setProgress(pct, label) {
     lbl.textContent = label || 'Canalizando...';
 }
 function hideProgress() {
-    const wrap = document.getElementById('progress-wrap');
-    wrap.classList.remove('visible');
+    document.getElementById('progress-wrap').classList.remove('visible');
     document.getElementById('progress-fill').style.width = '0%';
 }
 
-// ── STREAMING CANALIZAR ────────────────────────────────
-// Usa streaming SSE da API Gemini para evitar timeout em textos longos
+// ── CANALIZAR ──────────────────────────────────────────
 async function canalizar() {
     const vibe = document.getElementById('vibe').value.trim();
     const h1   = document.getElementById('h1').value.trim();
@@ -786,40 +889,31 @@ async function canalizar() {
     btn.textContent = 'Canalizando...';
     setProgress(10, 'Invocando a narrativa...');
 
-    // Constrói o prompt com instrução sobre sinopse em 3ª pessoa
     const protagonistas = [h1, h2].filter(Boolean).join(' e ') || 'os protagonistas';
-    const instrucaoSinopse = `
-REGRA ABSOLUTA: A sinopse que você recebe é sempre um resumo de orientação em terceira pessoa.
-Ao escrever a cena, use o POV indicado: "${pov}".
-Primeiro protagonista: ${h1 || 'não informado'}.
-Segundo protagonista: ${h2 || 'não informado'}.
-Protagonistas da cena: ${protagonistas}.
-POV da narrativa: ${pov}.
-Meta de extensão: aproximadamente ${meta} palavras — NÃO pare antes disso. Continue a cena até atingir a extensão solicitada.
-Sinopse do ato (não copie, use como guia): ${vibe}
+    const prompt = `Você é um escritor literário épico. Escreva uma cena completa de aproximadamente ${meta} palavras.
 
-Escreva a cena literária completa agora, em prosa épica, rica e imersiva. Sem comentários adicionais, apenas o texto da obra.`;
+PERSONAGENS: ${protagonistas}
+PONTO DE VISTA: ${pov}
+CENA: ${vibe}
 
-    const modelos = ["gemini-2.5-flash", "gemini-2.5-flash"];
+INSTRUÇÕES:
+- Escreva APENAS o texto da cena, sem títulos, sem comentários, sem regras
+- Use o ponto de vista indicado (${pov})
+- Mínimo de ${meta} palavras
+- Prosa rica, imersiva e épica
+- Comece direto na narrativa`;
+
     let sucesso = false;
 
-    for (const modelo of modelos) {
-        if (sucesso) break;
-        try {
-            setProgress(25, `Consultando ${modelo}...`);
-
-            // Tenta streaming primeiro
-            const streamOk = await tentarStreaming(modelo, instrucaoSinopse, meta);
-            if (streamOk) { sucesso = true; break; }
-
-            // Fallback: requisição normal em chunks simulados
+    try {
+        setProgress(25, 'Conectando...');
+        sucesso = await tentarStreaming('gemini-2.5-flash', prompt, meta);
+        if (!sucesso) {
             setProgress(50, 'Modo alternativo...');
-            const chunkOk = await tentarNormal(modelo, instrucaoSinopse);
-            if (chunkOk) { sucesso = true; break; }
-
-        } catch(e) {
-            console.warn(`Falha em ${modelo}:`, e.message);
+            sucesso = await tentarNormal('gemini-2.5-flash', prompt);
         }
+    } catch(e) {
+        console.error('Erro:', e);
     }
 
     if (!sucesso) {
@@ -827,22 +921,16 @@ Escreva a cena literária completa agora, em prosa épica, rica e imersiva. Sem 
     }
 
     hideProgress();
-    btn.textContent = '⬡ Canalizar Destino';
+    btn.textContent = 'Canalizar Destino';
     btn.disabled = false;
     updateWordCount();
     saveData();
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 }
 
-// ── STREAMING (SSE) ────────────────────────────────────
+// ── STREAMING ──────────────────────────────────────────
 async function tentarStreaming(modelo, prompt, meta) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:streamGenerateContent?alt=sse`;
-
-    // Gemini 1.5 Flash: máx 8192 tokens de saída
-    // Gemini 1.5 Pro: máx 8192 tokens de saída na API pública
-    // Para textos longos (10k palavras = ~13k tokens), fazemos múltiplas chamadas encadeadas
-    const MAX_TOKENS = 8192;
-
     let response;
     try {
         response = await fetch(url, {
@@ -850,11 +938,7 @@ async function tentarStreaming(modelo, prompt, meta) {
             headers: { 'Content-Type': 'application/json', 'x-goog-api-key': CHAVE_API },
             body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    temperature: 0.9,
-                    maxOutputTokens: MAX_TOKENS,
-                    topP: 0.95
-                }
+                generationConfig: { temperature: 0.9, maxOutputTokens: 8192, topP: 0.95 }
             })
         });
     } catch(e) { return false; }
@@ -862,20 +946,17 @@ async function tentarStreaming(modelo, prompt, meta) {
     if (!response.ok) return false;
 
     const editor = document.getElementById('editor');
-
-    // Adiciona separador se já houver conteúdo
     const existing = editor.innerText.trim();
-    const prefix = existing ? existing + '\n\n─────────────────────────────\n\n' : '';
+    const prefix = existing ? existing + '\n\n' : '';
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let sseBuffer = '';
-    let accumulado = '';     // buffer interno — não toca no DOM a cada chunk
+    let accumulado = '';
     let totalChars = 0;
     const estimatedTotal = meta * 5.5;
-
-    // Atualiza o DOM no máximo a cada 120ms para evitar thrashing
     let lastRender = 0;
+
     function flushDOM() {
         const now = performance.now();
         if (now - lastRender > 120) {
@@ -889,11 +970,9 @@ async function tentarStreaming(modelo, prompt, meta) {
     while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
         sseBuffer += decoder.decode(value, { stream: true });
         const lines = sseBuffer.split('\n');
         sseBuffer = lines.pop();
-
         for (const line of lines) {
             if (!line.startsWith('data: ')) continue;
             const raw = line.slice(6).trim();
@@ -906,51 +985,14 @@ async function tentarStreaming(modelo, prompt, meta) {
                     totalChars += chunk.length;
                     flushDOM();
                     const pct = Math.min(95, 40 + (totalChars / estimatedTotal) * 55);
-                    setProgress(pct, `Escrevendo... ${Math.round(totalChars / 5.5).toLocaleString('pt-BR')} palavras`);
+                    setProgress(pct, `Escrevendo... ${Math.round(totalChars/5.5).toLocaleString('pt-BR')} palavras`);
                 }
             } catch(_) {}
         }
     }
 
-    // Render final garantido
     editor.innerText = prefix + accumulado;
-
-    // Se meta > 8k palavras (~6400 tokens), continua com chamada encadeada
-    const palavrasGeradas = Math.round(accumulado.length / 5.5);
-    if (palavrasGeradas < meta * 0.75 && accumulado.length > 100) {
-        setProgress(96, 'Continuando a saga...');
-        const continuacao = await continuarNarrativa(modelo, prompt, accumulado, meta - palavrasGeradas);
-        if (continuacao) {
-            editor.innerText += '\n' + continuacao;
-        }
-    }
-
     return editor.innerText.trim().length > 0;
-}
-
-// ── CONTINUAÇÃO PARA TEXTOS ÉPICOS (>8k tokens) ────────
-async function continuarNarrativa(modelo, promptOriginal, textoJaEscrito, palavrasRestantes) {
-    const promptContinuacao = `${promptOriginal}
-
---- CONTINUAÇÃO ---
-O texto abaixo já foi escrito. Continue a partir do ponto em que parou, sem repetir nada, por mais ${palavrasRestantes} palavras:
-
-${textoJaEscrito.slice(-1500)}`; // Envia só as últimas ~1500 chars como contexto
-
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`;
-    try {
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': CHAVE_API },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: promptContinuacao }] }],
-                generationConfig: { temperature: 0.9, maxOutputTokens: 8192, topP: 0.95 }
-            })
-        });
-        if (!res.ok) return null;
-        const data = await res.json();
-        return data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
-    } catch(_) { return null; }
 }
 
 // ── FALLBACK NORMAL ────────────────────────────────────
@@ -967,34 +1009,23 @@ async function tentarNormal(modelo, prompt) {
             })
         });
     } catch(e) { return false; }
-
     if (!response.ok) return false;
     const data = await response.json();
     if (data.error) return false;
-
     const texto = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!texto) return false;
-
     const editor = document.getElementById('editor');
     const existing = editor.innerText.trim();
-    editor.innerText = existing ? existing + '\n\n─────────────────────────────\n\n' + texto : texto;
+    editor.innerText = existing ? existing + '\n\n' + texto : texto;
     return true;
 }
 
-// ── AÇÕES ──────────────────────────────────────────────
-function clearEditor() {
-    if (!confirm('Limpar o manuscrito atual? O texto será perdido.')) return;
-    document.getElementById('editor').innerText = '';
-    updateWordCount();
-    saveData();
-    showToast('Manuscrito limpo');
-}
-
+// ── COPIAR / EXPORTAR ──────────────────────────────────
 function copyText() {
     const text = document.getElementById('editor').innerText.trim();
     if (!text) { showToast('Nada para copiar'); return; }
     navigator.clipboard.writeText(text)
-        .then(() => showToast('Copiado para a área de transferência'))
+        .then(() => showToast('Copiado!'))
         .catch(() => showToast('Falha ao copiar'));
 }
 
@@ -1008,7 +1039,7 @@ function exportTxt() {
     a.download = title.replace(/\s+/g, '_') + '.txt';
     a.click();
     URL.revokeObjectURL(a.href);
-    showToast('Exportado com sucesso');
+    showToast('Exportado!');
 }
 
 // ── INIT ───────────────────────────────────────────────
@@ -1018,19 +1049,20 @@ window.onload = () => {
     if (books.length > 0) {
         loadBook(books[0].id);
     } else {
-        // Cria primeiro livro automaticamente
         const id = genId();
         const newLib = {};
         newLib[id] = {
             id, title: '', h1: '', h2: '',
             pov: 'Terceira Pessoa do Onisciente',
-            words: '1500', vibe: '', content: '',
+            words: '1500', vibe: '',
+            chapters: [],
             createdAt: Date.now()
         };
         saveLibrary(newLib);
         currentBookId = id;
+        renderBookList();
+        renderChapters();
     }
-    renderBookList();
     updateWordCount();
 };
 </script>
