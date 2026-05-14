@@ -1,33 +1,448 @@
 
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configurações de Destino - 13/05/2026</title>
-    <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .input-group { margin: 15px 0; }
-        input { padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; }
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 5px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ZENITH IMPERIAL - 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+    --gold: #d4af37;
+    --gold-dark: #a07820;
+    --bright: #ffeaac;
+    --dim: rgba(212,175,55,0.18);
+    --bg: #080705;
+    --surface: #0e0c08;
+    --text: #f0e8d0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 2px; }
+body { background: var(--bg); color: var(--text); font-family: 'Cormorant Garamond', serif; min-height: 100vh; overflow-x: hidden; }
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 9999; opacity: 0.35; }
+#overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 99; backdrop-filter: blur(2px); }
+#overlay.show { display: block; }
+#sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 280px; background: var(--surface); border-right: 1px solid var(--dim); z-index: 100; transform: translateX(-100%); transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; overflow: hidden; }
+#sidebar.open { transform: translateX(0); }
+.sidebar-head { padding: 24px 20px 16px; border-bottom: 1px solid var(--dim); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+.sidebar-head h2 { font-family: 'Cinzel', serif; font-size: 0.75rem; letter-spacing: 4px; color: var(--gold); text-transform: uppercase; }
+.sidebar-close { background: none; border: none; color: var(--gold-dark); cursor: pointer; font-size: 1.2rem; padding: 4px; transition: color 0.2s; }
+.sidebar-close:hover { color: var(--bright); }
+#book-list { flex: 1; overflow-y: auto; padding: 12px; }
+.book-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 3px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; margin-bottom: 6px; }
+.book-item:hover { border-color: var(--dim); background: rgba(212,175,55,0.05); }
+.book-item.active { border-color: var(--gold-dark); background: rgba(212,175,55,0.08); }
+.book-item-title { font-family: 'Cinzel', serif; font-size: 0.72rem; color: var(--bright); letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+.book-item-meta { font-size: 0.62rem; color: var(--gold-dark); margin-top: 2px; }
+.btn-del-book { background: none; border: none; color: #5a3a1a; cursor: pointer; font-size: 0.9rem; padding: 2px 6px; border-radius: 2px; transition: color 0.2s; flex-shrink: 0; }
+.btn-del-book:hover { color: #c0392b; }
+.sidebar-footer { padding: 16px 12px; border-top: 1px solid var(--dim); flex-shrink: 0; }
+.btn-new-book { width: 100%; background: transparent; border: 1px solid var(--gold-dark); color: var(--gold); font-family: 'Cinzel', serif; font-size: 0.68rem; letter-spacing: 3px; padding: 12px; cursor: pointer; text-transform: uppercase; border-radius: 3px; transition: all 0.2s; }
+.btn-new-book:hover { background: var(--dim); border-color: var(--gold); color: var(--bright); }
+.topbar { position: sticky; top: 0; background: rgba(8,7,5,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--dim); padding: 14px 20px; display: flex; align-items: center; gap: 16px; z-index: 50; }
+.btn-library { background: transparent; border: 1px solid var(--gold-dark); color: var(--gold); font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 3px; padding: 9px 16px; cursor: pointer; text-transform: uppercase; border-radius: 3px; transition: all 0.2s; white-space: nowrap; }
+.btn-library:hover { background: var(--dim); color: var(--bright); border-color: var(--gold); }
+.title-input-wrap { flex: 1; }
+#title { background: transparent; border: none; border-bottom: 1px solid rgba(212,175,55,0.2); width: 100%; color: var(--bright); padding: 6px 0; outline: none; font-family: 'Cinzel', serif; font-size: clamp(0.85rem, 2.5vw, 1.1rem); letter-spacing: 2px; font-weight: 700; }
+#title::placeholder { color: rgba(212,175,55,0.25); }
+.word-counter { font-family: 'Cinzel', serif; font-size: 0.6rem; color: var(--gold-dark); letter-spacing: 2px; white-space: nowrap; }
+.header { text-align: center; padding: 48px 20px 32px; border-bottom: 1px solid var(--dim); position: relative; }
+.header::after { content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); width: 120px; height: 1px; background: var(--gold); }
+.brand { font-family: 'Cinzel', serif; font-size: clamp(0.55rem, 2vw, 0.7rem); letter-spacing: 8px; color: var(--gold-dark); text-transform: uppercase; margin-bottom: 14px; }
+.main-title-display { font-family: 'Cinzel', serif; font-size: clamp(2rem, 8vw, 3.6rem); font-weight: 900; background: linear-gradient(180deg, var(--bright) 0%, var(--gold) 60%, var(--gold-dark) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.1; letter-spacing: 2px; }
+.workspace { max-width: 740px; margin: 0 auto; padding: 32px 20px 140px; }
+.field-group { margin-bottom: 28px; }
+.label-imperial { font-family: 'Cinzel', serif; color: var(--gold); font-size: 0.62rem; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 10px; display: block; }
+.input-zenith { background: transparent; border: none; border-bottom: 1px solid rgba(212,175,55,0.25); width: 100%; color: var(--text); padding: 12px 0; outline: none; font-family: 'Cormorant Garamond', serif; font-size: 17px; transition: border-color 0.2s; }
+.input-zenith:focus { border-bottom-color: var(--gold); }
+.input-zenith::placeholder { color: rgba(240,232,208,0.2); }
+input[type="number"].input-zenith { -moz-appearance: textfield; }
+input[type="number"].input-zenith::-webkit-outer-spin-button, input[type="number"].input-zenith::-webkit-inner-spin-button { -webkit-appearance: none; }
+select.input-zenith { cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23d4af37' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; padding-right: 28px; }
+select.input-zenith option { background: #0e0c08; color: var(--text); }
+textarea.input-zenith { resize: none; height: 110px; line-height: 1.7; font-style: italic; }
+.config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 28px; }
+.protagonists-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 28px; }
+.divider { display: flex; align-items: center; gap: 16px; margin: 32px 0; }
+.divider-line { flex: 1; height: 1px; background: var(--dim); }
+.divider-diamond { width: 6px; height: 6px; background: var(--gold-dark); transform: rotate(45deg); flex-shrink: 0; }
+.editor-label { font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 4px; color: var(--gold-dark); text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+.editor-label::after { content: ''; flex: 1; height: 1px; background: var(--dim); }
+#editor { min-height: 480px; padding: 28px 0; line-height: 1.9; font-size: 19px; white-space: pre-wrap; outline: none; color: var(--text); font-family: 'Cormorant Garamond', serif; caret-color: var(--gold); word-break: break-word; overflow-wrap: break-word; }
+#editor:empty::before { content: 'Sua obra nascerá aqui...'; color: rgba(212,175,55,0.15); font-style: italic; pointer-events: none; }
+.progress-wrap { margin: 24px 0 8px; display: none; }
+.progress-wrap.visible { display: block; }
+.progress-label { font-family: 'Cinzel', serif; font-size: 0.58rem; letter-spacing: 3px; color: var(--gold-dark); margin-bottom: 8px; text-transform: uppercase; }
+.progress-bar-bg { height: 2px; background: rgba(212,175,55,0.1); border-radius: 1px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold-dark), var(--bright)); border-radius: 1px; transition: width 0.3s ease; width: 0%; animation: shimmer 1.5s infinite; }
+@keyframes shimmer { 0%,100%{ filter: brightness(1); } 50%{ filter: brightness(1.4); } }
+.btn-canalizar { background: linear-gradient(135deg, var(--bright) 0%, var(--gold) 50%, var(--gold-dark) 100%); color: #000; font-family: 'Cinzel', serif; font-weight: 900; font-size: 0.78rem; letter-spacing: 4px; padding: 20px 40px; border-radius: 3px; width: 100%; margin-top: 32px; border: none; cursor: pointer; text-transform: uppercase; position: relative; overflow: hidden; transition: all 0.3s; box-shadow: 0 0 30px rgba(212,175,55,0.15); }
+.btn-canalizar::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.25) 50%, transparent 100%); transform: translateX(-100%); transition: transform 0.5s; }
+.btn-canalizar:hover::before { transform: translateX(100%); }
+.btn-canalizar:hover { box-shadow: 0 0 50px rgba(212,175,55,0.3); }
+.btn-canalizar:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
+.btn-canalizar:disabled::before { display: none; }
+.actions-row { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+.btn-action { flex: 1; min-width: 110px; background: transparent; border: 1px solid var(--dim); color: var(--gold-dark); font-family: 'Cinzel', serif; font-size: 0.58rem; letter-spacing: 3px; padding: 12px; cursor: pointer; text-transform: uppercase; border-radius: 3px; transition: all 0.2s; }
+.btn-action:hover { border-color: var(--gold-dark); color: var(--gold); background: rgba(212,175,55,0.05); }
+.btn-action.primary { border-color: var(--gold-dark); color: var(--gold); }
+#chapters-panel { margin-top: 32px; display: none; }
+.chapter-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--dim); }
+.chapter-info { cursor: pointer; flex: 1; }
+.chapter-title { font-family: 'Cinzel', serif; font-size: 0.72rem; color: var(--bright); letter-spacing: 1px; }
+.chapter-meta { font-size: 0.6rem; color: var(--gold-dark); margin-top: 3px; }
+.btn-del-cap { background: none; border: none; color: #5a3a1a; cursor: pointer; font-size: 0.85rem; padding: 4px 8px; transition: color 0.2s; }
+.btn-del-cap:hover { color: #c0392b; }
+#toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface); border: 1px solid var(--gold-dark); color: var(--bright); font-family: 'Cinzel', serif; font-size: 0.65rem; letter-spacing: 2px; padding: 14px 28px; border-radius: 3px; opacity: 0; transition: all 0.3s; pointer-events: none; z-index: 9998; white-space: nowrap; }
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+@media (max-width: 520px) { .protagonists-grid, .config-grid { grid-template-columns: 1fr; } .actions-row { flex-direction: column; } #sidebar { width: 85vw; } }
+</style>
 </head>
 <body>
-    <h1>Painel de Controle Zenith</h1>
-    <p>Data atual: 13 de maio de 2026</p>
-    
-    <div class="input-group">
-        <label for="wordCount">Quantidade de Palavras:</label>
-        <input type="number" id="wordCount" value="900" placeholder="Ex: 900">
+
+<div id="overlay" onclick="closeSidebar()"></div>
+<div id="sidebar">
+    <div class="sidebar-head">
+        <h2>Gaveta Literária</h2>
+        <button class="sidebar-close" onclick="closeSidebar()">✕</button>
+    </div>
+    <div id="book-list"></div>
+    <div class="sidebar-footer">
+        <button class="btn-new-book" onclick="newBook()">+ Nova Obra</button>
+    </div>
+</div>
+
+<div class="topbar">
+    <button class="btn-library" onclick="openSidebar()">☰ Biblioteca</button>
+    <div class="title-input-wrap">
+        <input id="title" placeholder="Título da Obra..." oninput="saveData()">
+    </div>
+    <div class="word-counter" id="word-counter">0 palavras</div>
+</div>
+
+<div class="header">
+    <div class="brand">Ateliê de Narrativas - 14/05/2026</div>
+    <div class="main-title-display">ZENITH IMPERIAL</div>
+</div>
+
+<div class="workspace">
+
+    <div class="field-group">
+        <label class="label-imperial">Protagonistas</label>
+        <div class="protagonists-grid">
+            <div>
+                <label class="label-imperial" style="font-size:0.5rem;color:var(--gold-dark);margin-bottom:6px">Primeiro</label>
+                <input id="h1" class="input-zenith" placeholder="Nome do protagonista" oninput="saveData()">
+            </div>
+            <div>
+                <label class="label-imperial" style="font-size:0.5rem;color:var(--gold-dark);margin-bottom:6px">Segundo</label>
+                <input id="h2" class="input-zenith" placeholder="Nome do protagonista" oninput="saveData()">
+            </div>
+        </div>
     </div>
 
-    <button onclick="iniciar()">Canalizar Destino</button>
+    <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
 
-    <script>
-        function iniciar() {
-            const quantidade = document.getElementById('wordCount').value;
-            alert("Iniciando canalização para: " + quantidade + " palavras. Sistema pronto (13/05/2026).");
+    <div class="field-group">
+        <label class="label-imperial">Configurações da Obra</label>
+        <div class="config-grid">
+            <div>
+                <label class="label-imperial" style="font-size:0.5rem;color:var(--gold-dark);margin-bottom:6px">Ponto de Vista</label>
+                <select id="pov" class="input-zenith" onchange="saveData()">
+                    <option value="Terceira Pessoa Onisciente">Terceira Pessoa (Onisciente)</option>
+                    <option value="Terceira Pessoa Limitado">Terceira Pessoa (Limitado)</option>
+                    <option value="Primeira Pessoa">Primeira Pessoa</option>
+                    <option value="Segunda Pessoa">Segunda Pessoa</option>
+                </select>
+            </div>
+            <div>
+                <label class="label-imperial" style="font-size:0.5rem;color:var(--gold-dark);margin-bottom:6px">Nº de Palavras</label>
+                <input id="words" type="number" min="100" max="20000" step="100" value="1500" class="input-zenith" placeholder="Ex: 900" oninput="saveData()">
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+
+    <div class="field-group">
+        <label class="label-imperial">Sinopse / Ato</label>
+        <textarea id="vibe" class="input-zenith" placeholder="Descreva o que acontece nesta cena ou capítulo..." oninput="saveData()"></textarea>
+    </div>
+
+    <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+
+    <div class="editor-wrap">
+        <div class="editor-label">Manuscrito</div>
+        <div id="editor" contenteditable="true" oninput="saveData(); updateWordCount();" spellcheck="false"></div>
+    </div>
+
+    <div class="progress-wrap" id="progress-wrap">
+        <div class="progress-label" id="progress-label">Canalizando...</div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
+    </div>
+
+    <button onclick="canalizar()" id="btn-run" class="btn-canalizar">Canalizar Destino</button>
+
+    <div class="actions-row">
+        <button class="btn-action primary" onclick="salvarCapitulo()">Salvar Capitulo</button>
+        <button class="btn-action" onclick="copyText()">Copiar Texto</button>
+        <button class="btn-action" onclick="exportTxt()">Exportar .txt</button>
+        <button class="btn-action" onclick="clearEditor()">Limpar Editor</button>
+    </div>
+
+    <div id="chapters-panel">
+        <div class="editor-label" style="margin-top:32px;">Capitulos Salvos</div>
+        <div id="chapters-list"></div>
+    </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+// USANDO SEU NOVO TOKEN DO CLOUDFLARE
+var API_KEY = "cfut_tMbjb7fsE8SRMDnRx3NsMuXA8GKRwDtlWNAQI1JNd1b8f0d7"; 
+var MODEL   = "gemini-1.5-flash"; // Versão estável
+var BASE    = "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL;
+var currentBookId = null;
+
+function showToast(msg, ms) {
+    ms = ms || 2500;
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(function() { t.classList.remove("show"); }, ms);
+}
+
+function updateWordCount() {
+    var txt = document.getElementById("editor").innerText.trim();
+    var n   = txt ? txt.split(/\s+/).length : 0;
+    document.getElementById("word-counter").textContent = n.toLocaleString("pt-BR") + " palavras";
+}
+
+function setProgress(pct, label) {
+    document.getElementById("progress-wrap").classList.add("visible");
+    document.getElementById("progress-fill").style.width = pct + "%";
+    document.getElementById("progress-label").textContent = label || "Canalizando...";
+}
+
+function hideProgress() {
+    document.getElementById("progress-wrap").classList.remove("visible");
+    document.getElementById("progress-fill").style.width = "0%";
+}
+
+function getLib()     { return JSON.parse(localStorage.getItem("zenith_v3") || "{}"); }
+function saveLib(lib) { localStorage.setItem("zenith_v3", JSON.stringify(lib)); }
+function genId()      { return "b_" + Date.now() + "_" + Math.random().toString(36).slice(2,6); }
+
+function newBook() {
+    var id  = genId();
+    var lib = getLib();
+    lib[id] = { id: id, title: "Nova Obra", h1: "", h2: "", pov: "Terceira Pessoa Onisciente", words: "1500", vibe: "", chapters: [], createdAt: Date.now() };
+    saveLib(lib);
+    loadBook(id);
+    closeSidebar();
+    showToast("Nova obra criada");
+}
+
+function loadBook(id) {
+    var lib  = getLib();
+    var book = lib[id];
+    if (!book) return;
+    currentBookId = id;
+    document.getElementById("title").value = book.title || "";
+    document.getElementById("h1").value    = book.h1    || "";
+    document.getElementById("h2").value    = book.h2    || "";
+    document.getElementById("pov").value   = book.pov   || "Terceira Pessoa Onisciente";
+    document.getElementById("words").value = book.words || "1500";
+    document.getElementById("vibe").value  = book.vibe  || "";
+    document.getElementById("editor").innerText = "";
+    updateWordCount();
+    renderBookList();
+    renderChapters();
+}
+
+function saveData() {
+    if (!currentBookId) currentBookId = genId();
+    var lib = getLib();
+    if (!lib[currentBookId]) lib[currentBookId] = { id: currentBookId, chapters: [], createdAt: Date.now() };
+    var b      = lib[currentBookId];
+    b.title    = document.getElementById("title").value  || "Sem titulo";
+    b.h1       = document.getElementById("h1").value;
+    b.h2       = document.getElementById("h2").value;
+    b.pov      = document.getElementById("pov").value;
+    b.words    = document.getElementById("words").value;
+    b.vibe     = document.getElementById("vibe").value;
+    b.savedAt  = Date.now();
+    saveLib(lib);
+    renderBookList();
+}
+
+function salvarCapitulo() {
+    var texto = document.getElementById("editor").innerText.trim();
+    if (!texto) { showToast("Escreva ou gere um capitulo primeiro!"); return; }
+    if (!currentBookId) saveData();
+    var lib  = getLib();
+    var book = lib[currentBookId];
+    if (!book.chapters) book.chapters = [];
+    var num = book.chapters.length + 1;
+    var wc  = texto.split(/\s+/).filter(function(w) { return w.length > 0; }).length;
+    book.chapters.push({ id: genId(), num: num, title: "Capitulo " + num, content: texto, words: wc, savedAt: Date.now() });
+    book.savedAt = Date.now();
+    saveLib(lib);
+    document.getElementById("editor").innerText = "";
+    updateWordCount();
+    renderBookList();
+    renderChapters();
+    showToast("Capitulo salvo!");
+}
+
+function renderChapters() {
+    var panel = document.getElementById("chapters-panel");
+    var list  = document.getElementById("chapters-list");
+    if (!currentBookId) { panel.style.display = "none"; return; }
+    var lib  = getLib();
+    var caps = (lib[currentBookId] && lib[currentBookId].chapters) ? lib[currentBookId].chapters : [];
+    if (caps.length === 0) { panel.style.display = "none"; return; }
+    panel.style.display = "block";
+    var html = "";
+    for (var i = 0; i < caps.length; i++) {
+        var c = caps[i];
+        html += '<div class="chapter-item">' +
+            '<div class="chapter-info" onclick="lerCapitulo(\'' + c.id + '\')">' +
+                '<div class="chapter-title">' + c.title + '</div>' +
+                '<div class="chapter-meta">' + c.words.toLocaleString("pt-BR") + ' palavras</div>' +
+            '</div>' +
+            '<button class="btn-del-cap" onclick="deletarCapitulo(\'' + c.id + '\')" title="Apagar">x</button>' +
+        '</div>';
+    }
+    list.innerHTML = html;
+}
+
+function lerCapitulo(capId) {
+    var lib  = getLib();
+    var book = lib[currentBookId];
+    var cap  = null;
+    if (book && book.chapters) {
+        for (var i = 0; i < book.chapters.length; i++) {
+            if (book.chapters[i].id === capId) { cap = book.chapters[i]; break; }
         }
-    </script>
+    }
+    if (!cap) return;
+    document.getElementById("editor").innerText = cap.content;
+    updateWordCount();
+    showToast("Lendo: " + cap.title);
+}
+
+function deletarCapitulo(capId) {
+    if (!confirm("Apagar este capitulo?")) return;
+    var lib  = getLib();
+    var book = lib[currentBookId];
+    book.chapters = book.chapters.filter(function(c) { return c.id !== capId; });
+    saveLib(lib);
+    renderChapters();
+    renderBookList();
+    showToast("Capitulo removido");
+}
+
+function deleteBook(id, e) {
+    e.stopPropagation();
+    var lib  = getLib();
+    if (!confirm("Apagar obra completa?")) return;
+    delete lib[id];
+    saveLib(lib);
+    renderBookList();
+    showToast("Obra removida");
+}
+
+function renderBookList() {
+    var lib   = getLib();
+    var list  = document.getElementById("book-list");
+    var books = Object.values(lib).sort(function(a, b) { return (b.savedAt || b.createdAt) - (a.savedAt || a.createdAt); });
+    if (books.length === 0) {
+        list.innerHTML = '<div style="text-align:center;padding:20px;font-family:Cinzel">Vazio</div>';
+        return;
+    }
+    var html = "";
+    for (var i = 0; i < books.length; i++) {
+        var b = books[i];
+        var isActive = b.id === currentBookId;
+        html += '<div class="book-item ' + (isActive ? "active" : "") + '" onclick="loadBook(\'' + b.id + '\'); closeSidebar();">' +
+            '<div>' +
+                '<div class="book-item-title">' + (b.title || "Sem titulo") + '</div>' +
+            '</div>' +
+            '<button class="btn-del-book" onclick="deleteBook(\'' + b.id + '\', event)">x</button>' +
+        '</div>';
+    }
+    list.innerHTML = html;
+}
+
+function openSidebar()  { document.getElementById("sidebar").classList.add("open"); document.getElementById("overlay").classList.add("show"); renderBookList(); }
+function closeSidebar() { document.getElementById("sidebar").classList.remove("open"); document.getElementById("overlay").classList.remove("show"); }
+
+function clearEditor() {
+    if (!confirm("Limpar editor?")) return;
+    document.getElementById("editor").innerText = "";
+    updateWordCount();
+}
+
+function copyText() {
+    var txt = document.getElementById("editor").innerText.trim();
+    navigator.clipboard.writeText(txt).then(function() { showToast("Copiado!"); });
+}
+
+function exportTxt() {
+    var txt = document.getElementById("editor").innerText.trim();
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([txt], { type: "text/plain" }));
+    a.download = "obra_zenith.txt";
+    a.click();
+}
+
+async function canalizar() {
+    var vibe = document.getElementById("vibe").value.trim();
+    var h1   = document.getElementById("h1").value.trim();
+    var h2   = document.getElementById("h2").value.trim();
+    var pov  = document.getElementById("pov").value;
+    var meta = parseInt(document.getElementById("words").value) || 1500;
+
+    if (!vibe) { showToast("Escreva a sinopse!"); return; }
+
+    var btn = document.getElementById("btn-run");
+    btn.disabled = true;
+    setProgress(20, "Conectando ao Destino...");
+
+    var prompt = "Aja como um escritor épico. Escreva uma cena de aproximadamente " + meta + " palavras. Personagens: " + h1 + " e " + h2 + ". POV: " + pov + ". Cena: " + vibe;
+
+    try {
+        var res = await fetch(BASE + ":generateContent?key=" + API_KEY, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        
+        var data = await res.json();
+        var texto = data.candidates[0].content.parts[0].text;
+        
+        document.getElementById("editor").innerText = texto;
+        showToast("Canalização concluída!");
+    } catch(e) {
+        console.error(e);
+        showToast("Erro na conexão. Verifique o Token.");
+    }
+
+    hideProgress();
+    btn.disabled = false;
+    updateWordCount();
+    saveData();
+}
+
+window.onload = function() {
+    renderBookList();
+    updateWordCount();
+};
+</script>
 </body>
 </html>
