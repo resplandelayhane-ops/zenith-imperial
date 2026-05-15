@@ -2,45 +2,56 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZENITH IMPERIAL - REBORN</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Cormorant+Garamond&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ZENITH IMPERIAL</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <style>
-    :root { --gold: #d4af37; --bg: #080705; --text: #f0e8d0; }
-    body { background: var(--bg); color: var(--text); font-family: 'Cormorant Garamond', serif; margin: 0; padding: 20px; }
-    .container { max-width: 800px; margin: 0 auto; }
-    h1 { font-family: 'Cinzel', serif; color: var(--gold); text-align: center; letter-spacing: 5px; }
-    .box { border: 1px solid rgba(212,175,55,0.3); padding: 20px; margin-bottom: 20px; border-radius: 5px; }
-    input, textarea, select { width: 100%; background: #111; border: 1px solid #444; color: #fff; padding: 10px; margin: 10px 0; border-radius: 4px; }
-    .btn { background: var(--gold); color: #000; border: none; padding: 15px; width: 100%; font-weight: bold; cursor: pointer; font-family: 'Cinzel'; }
-    .btn-red { background: #8b0000; color: white; margin-top: 10px; }
-    #editor { min-height: 300px; border: 1px solid var(--gold); padding: 20px; margin-top: 20px; white-space: pre-wrap; }
-    .loading { display: none; color: var(--gold); text-align: center; font-weight: bold; }
+:root { --gold: #d4af37; --gold-dark: #a07820; --bright: #ffeaac; --dim: rgba(212,175,55,0.18); --bg: #080705; --surface: #0e0c08; --text: #f0e8d0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Cormorant Garamond', serif; min-height: 100vh; overflow-x: hidden; }
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 9999; opacity: 0.35; }
+.topbar { position: sticky; top: 0; background: rgba(8,7,5,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--dim); padding: 14px 20px; display: flex; align-items: center; gap: 16px; z-index: 50; }
+#title { background: transparent; border: none; border-bottom: 1px solid rgba(212,175,55,0.2); width: 100%; color: var(--bright); padding: 6px 0; outline: none; font-family: 'Cinzel', serif; font-size: 1.1rem; letter-spacing: 2px; font-weight: 700; }
+.header { text-align: center; padding: 48px 20px 32px; border-bottom: 1px solid var(--dim); position: relative; }
+.main-title-display { font-family: 'Cinzel', serif; font-size: 3rem; font-weight: 900; background: linear-gradient(180deg, var(--bright) 0%, var(--gold) 60%, var(--gold-dark) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.1; letter-spacing: 2px; }
+.workspace { max-width: 740px; margin: 0 auto; padding: 32px 20px 140px; }
+.label-imperial { font-family: 'Cinzel', serif; color: var(--gold); font-size: 0.62rem; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 10px; display: block; }
+.input-zenith { background: transparent; border: none; border-bottom: 1px solid rgba(212,175,55,0.25); width: 100%; color: var(--text); padding: 12px 0; outline: none; font-family: 'Cormorant Garamond', serif; font-size: 17px; margin-bottom: 20px; }
+textarea.input-zenith { height: 110px; resize: none; }
+#editor { min-height: 400px; padding: 28px 0; line-height: 1.9; font-size: 19px; white-space: pre-wrap; outline: none; border-top: 1px solid var(--dim); }
+.btn-canalizar { background: linear-gradient(135deg, var(--bright) 0%, var(--gold) 50%, var(--gold-dark) 100%); color: #000; font-family: 'Cinzel', serif; font-weight: 900; font-size: 0.78rem; letter-spacing: 4px; padding: 20px; width: 100%; border: none; cursor: pointer; text-transform: uppercase; margin-top: 20px; }
+.btn-red { background: #500; color: #fff; padding: 10px; width: 100%; border: none; margin-top: 10px; font-family: 'Cinzel'; cursor: pointer; }
+#loading { display: none; text-align: center; color: var(--gold); margin: 10px 0; font-family: 'Cinzel'; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>ZENITH IMPERIAL</h1>
-    
-    <div class="box">
-        <label>Protagonistas</label>
-        <input type="text" id="h1" placeholder="Nome 1">
-        <input type="text" id="h2" placeholder="Nome 2">
-        
-        <label>Sinopse da Cena</label>
-        <textarea id="vibe" placeholder="O que acontece?"></textarea>
-        
-        <label>Modelo de IA</label>
-        <select id="modelSelect">
-            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Rápido)</option>
-            <option value="gemini-pro">Gemini Pro (Estável)</option>
-        </select>
-    </div>
+<div class="topbar">
+    <input id="title" placeholder="Título da Obra...">
+</div>
 
-    <div id="loading" class="loading">CANALIZANDO DESTINO... AGUARDE...</div>
-    <button class="btn" onclick="canalizar()">CANALIZAR DESTINO</button>
-    <button class="btn btn-red" onclick="resetKey()">TROCAR CHAVE API (RESET)</button>
+<div class="header">
+    <div class="main-title-display">ZENITH IMPERIAL</div>
+</div>
+
+<div class="workspace">
+    <label class="label-imperial">Protagonistas</label>
+    <input id="h1" class="input-zenith" placeholder="Nome 1">
+    <input id="h2" class="input-zenith" placeholder="Nome 2">
+
+    <label class="label-imperial">Sinopse da Cena</label>
+    <textarea id="vibe" class="input-zenith" placeholder="O que acontece nesta cena?"></textarea>
+
+    <label class="label-imperial">Modelo de IA</label>
+    <select id="modelSelect" class="input-zenith" style="background: #000; color: #d4af37;">
+        <option value="gemini-1.5-flash">Gemini 1.5 Flash (Rápido)</option>
+        <option value="gemini-pro">Gemini Pro (Estável)</option>
+    </select>
+
+    <div id="loading">CANALIZANDO DESTINO...</div>
+    <button class="btn-canalizar" onclick="canalizar()">Canalizar Destino</button>
+    <button class="btn-red" onclick="resetKey()">Trocar Chave API</button>
 
     <div id="editor" contenteditable="true"></div>
 </div>
@@ -48,8 +59,8 @@
 <script>
 function getApiKey() {
     let key = localStorage.getItem("zenith_key");
-    if (!key || key === "null") {
-        key = prompt("Insira sua Chave API do Google:");
+    if (!key) {
+        key = prompt("Invoque o Poder Imperial: Insira sua Chave API");
         if (key) {
             key = key.trim().replace(/\s/g, '');
             localStorage.setItem("zenith_key", key);
@@ -60,7 +71,7 @@ function getApiKey() {
 
 function resetKey() {
     localStorage.removeItem("zenith_key");
-    alert("Chave removida! O site pedirá uma nova na próxima vez.");
+    alert("Chave removida!");
     location.reload();
 }
 
@@ -77,8 +88,7 @@ async function canalizar() {
     if (!vibe) { alert("Escreva a sinopse!"); return; }
 
     loader.style.display = "block";
-    
-    const prompt = `Escreva uma cena literária épica com os personagens ${h1} e ${h2}. Contexto: ${vibe}. Seja detalhista e use linguagem rica.`;
+    const prompt = `Aja como um escritor épico. Escreva uma cena rica com ${h1} e ${h2}. Contexto: ${vibe}.`;
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
 
     try {
@@ -87,19 +97,16 @@ async function canalizar() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
-
         const data = await response.json();
 
         if (data.error) {
-            alert("ERRO DO GOOGLE: " + data.error.message);
-        } else if (data.candidates && data.candidates[0].content) {
-            const texto = data.candidates[0].content.parts[0].text;
-            document.getElementById('editor').innerText += "\n\n" + texto;
-        } else {
-            alert("Erro desconhecido. Verifique se sua chave está ativa.");
+            alert("Erro: " + data.error.message);
+        } else if (data.candidates) {
+            const result = data.candidates[0].content.parts[0].text;
+            document.getElementById("editor").innerText += "\n\n" + result;
         }
     } catch (e) {
-        alert("Erro de conexão: " + e.message);
+        alert("Falha na conexão.");
     } finally {
         loader.style.display = "none";
     }
