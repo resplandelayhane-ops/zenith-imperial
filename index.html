@@ -203,14 +203,14 @@ textarea.input-zenith { resize: none; height: 110px; line-height: 1.7; font-styl
 <div id="toast"></div>
 
 <script>
-// BLINDAGEM ATIVADA: A CHAVE FICA NO LOCALSTORAGE DO USUÁRIO
+// BLINDAGEM ATIVADA: A CHAVE FICA NO LOCALSTORAGE
 function getApiKey() {
     let key = localStorage.getItem("zenith_key");
     if (!key) {
-        key = prompt("Invoque o Poder Imperial: Insira sua Chave API do Gemini para começar.");
+        key = prompt("Invoque o Poder Imperial: Insira sua Chave API do Gemini.");
         if (key) {
+            key = key.trim().replace(/\s/g, ''); // LIMPA ESPAÇOS AUTOMATICAMENTE
             localStorage.setItem("zenith_key", key);
-            showToast("Chave API Invocada com Sucesso!");
         }
     }
     return key;
@@ -218,12 +218,8 @@ function getApiKey() {
 
 function resetApiKey() {
     localStorage.removeItem("zenith_key");
-    showToast("Chave removida. O site pedirá uma nova na próxima ação.");
+    showToast("Chave removida.");
 }
-
-var MODEL   = "gemini-1.5-flash"; // Ajustado para o modelo atual estável
-var BASE    = "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL;
-var currentBookId = null;
 
 function showToast(msg, ms) {
     ms = ms || 2500;
@@ -247,12 +243,11 @@ function setProgress(pct, label) {
 
 function hideProgress() {
     document.getElementById("progress-wrap").classList.remove("visible");
-    document.getElementById("progress-fill").style.width = "0%";
 }
 
 function getLib()     { return JSON.parse(localStorage.getItem("zenith_v3") || "{}"); }
 function saveLib(lib) { localStorage.setItem("zenith_v3", JSON.stringify(lib)); }
-function genId()      { return "b_" + Date.now() + "_" + Math.random().toString(36).slice(2,6); }
+function genId()      { return "b_" + Date.now(); }
 
 function newBook() {
     var id  = genId();
@@ -261,7 +256,6 @@ function newBook() {
     saveLib(lib);
     loadBook(id);
     closeSidebar();
-    showToast("Nova obra criada");
 }
 
 function loadBook(id) {
@@ -284,170 +278,91 @@ function loadBook(id) {
 function saveData() {
     if (!currentBookId) currentBookId = genId();
     var lib = getLib();
-    if (!lib[currentBookId]) lib[currentBookId] = { id: currentBookId, chapters: [], createdAt: Date.now() };
-    var b      = lib[currentBookId];
-    b.title    = document.getElementById("title").value  || "Sem titulo";
-    b.h1       = document.getElementById("h1").value;
-    b.h2       = document.getElementById("h2").value;
-    b.pov      = document.getElementById("pov").value;
-    b.words    = document.getElementById("words").value;
-    b.vibe     = document.getElementById("vibe").value;
-    b.savedAt  = Date.now();
+    if (!lib[currentBookId]) lib[currentBookId] = { id: currentBookId, chapters: [] };
+    var b = lib[currentBookId];
+    b.title = document.getElementById("title").value;
+    b.h1 = document.getElementById("h1").value;
+    b.h2 = document.getElementById("h2").value;
+    b.pov = document.getElementById("pov").value;
+    b.words = document.getElementById("words").value;
+    b.vibe = document.getElementById("vibe").value;
+    b.savedAt = Date.now();
     saveLib(lib);
     renderBookList();
 }
 
 function salvarCapitulo() {
     var texto = document.getElementById("editor").innerText.trim();
-    if (!texto) { showToast("Escreva ou gere um capitulo primeiro!"); return; }
-    if (!currentBookId) saveData();
-    var lib  = getLib();
+    if (!texto) return;
+    var lib = getLib();
     var book = lib[currentBookId];
-    if (!book.chapters) book.chapters = [];
-    var num = book.chapters.length + 1;
-    var wc  = texto.split(/\s+/).filter(function(w) { return w.length > 0; }).length;
-    book.chapters.push({ id: genId(), num: num, title: "Capitulo " + num, content: texto, words: wc, savedAt: Date.now() });
-    book.savedAt = Date.now();
+    book.chapters.push({ id: genId(), title: "Capítulo " + (book.chapters.length + 1), content: texto, words: texto.split(/\s+/).length });
     saveLib(lib);
     document.getElementById("editor").innerText = "";
     updateWordCount();
-    renderBookList();
     renderChapters();
-    showToast("Capitulo " + num + " salvo!");
 }
 
 function renderChapters() {
     var panel = document.getElementById("chapters-panel");
-    var list  = document.getElementById("chapters-list");
-    if (!currentBookId) { panel.style.display = "none"; return; }
-    var lib  = getLib();
+    var list = document.getElementById("chapters-list");
+    var lib = getLib();
     var caps = (lib[currentBookId] && lib[currentBookId].chapters) ? lib[currentBookId].chapters : [];
     if (caps.length === 0) { panel.style.display = "none"; return; }
     panel.style.display = "block";
-    var html = "";
-    for (var i = 0; i < caps.length; i++) {
-        var c = caps[i];
-        html += '<div class="chapter-item">' +
-            '<div class="chapter-info" onclick="lerCapitulo(\'' + c.id + '\')">' +
-                '<div class="chapter-title">' + c.title + '</div>' +
-                '<div class="chapter-meta">' + c.words.toLocaleString("pt-BR") + ' palavras</div>' +
-            '</div>' +
-            '<button class="btn-del-cap" onclick="deletarCapitulo(\'' + c.id + '\')" title="Apagar">x</button>' +
-        '</div>';
-    }
-    list.innerHTML = html;
-}
-
-function lerCapitulo(capId) {
-    var lib  = getLib();
-    var book = lib[currentBookId];
-    var cap  = null;
-    if (book && book.chapters) {
-        for (var i = 0; i < book.chapters.length; i++) {
-            if (book.chapters[i].id === capId) { cap = book.chapters[i]; break; }
-        }
-    }
-    if (!cap) return;
-    document.getElementById("editor").innerText = cap.content;
-    updateWordCount();
-    showToast("Lendo: " + cap.title);
-}
-
-function deletarCapitulo(capId) {
-    if (!confirm("Apagar este capitulo?")) return;
-    var lib  = getLib();
-    var book = lib[currentBookId];
-    book.chapters = book.chapters.filter(function(c) { return c.id !== capId; });
-    saveLib(lib);
-    renderChapters();
-    renderBookList();
-}
-
-function deleteBook(id, e) {
-    e.stopPropagation();
-    if (!confirm("Apagar esta obra completa?")) return;
-    var lib  = getLib();
-    delete lib[id];
-    saveLib(lib);
-    location.reload();
+    list.innerHTML = caps.map(c => `<div class="chapter-item" onclick="lerCapitulo('${c.id}')">${c.title} (${c.words} pal.)</div>`).join('');
 }
 
 function renderBookList() {
-    var lib   = getLib();
-    var list  = document.getElementById("book-list");
-    var books = Object.values(lib).sort(function(a, b) { return (b.savedAt || b.createdAt) - (a.savedAt || a.createdAt); });
-    var html = "";
-    for (var i = 0; i < books.length; i++) {
-        var b = books[i];
-        var isActive = b.id === currentBookId;
-        html += '<div class="book-item ' + (isActive ? "active" : "") + '" onclick="loadBook(\'' + b.id + '\'); closeSidebar();">' +
-            '<div style="overflow:hidden">' +
-                '<div class="book-item-title">' + (b.title || "Sem titulo") + '</div>' +
-                '<div class="book-item-meta">' + (b.chapters ? b.chapters.length : 0) + ' capítulos</div>' +
-            '</div>' +
-            '<button class="btn-del-book" onclick="deleteBook(\'' + b.id + '\', event)">x</button>' +
-        '</div>';
-    }
-    list.innerHTML = html || '<div style="text-align:center;padding:20px;font-size:0.7rem">NENHUMA OBRA</div>';
+    var lib = getLib();
+    var list = document.getElementById("book-list");
+    var books = Object.values(lib);
+    list.innerHTML = books.map(b => `<div class="book-item" onclick="loadBook('${b.id}')">${b.title || 'Sem título'}</div>`).join('');
 }
 
 function openSidebar()  { document.getElementById("sidebar").classList.add("open"); document.getElementById("overlay").classList.add("show"); }
 function closeSidebar() { document.getElementById("sidebar").classList.remove("open"); document.getElementById("overlay").classList.remove("show"); }
 
-function clearEditor() {
-    if (!confirm("Limpar editor?")) return;
-    document.getElementById("editor").innerText = "";
-    updateWordCount();
-}
-
-function copyText() {
-    var txt = document.getElementById("editor").innerText.trim();
-    navigator.clipboard.writeText(txt).then(function() { showToast("Copiado!"); });
-}
-
-function exportTxt() {
-    var txt = document.getElementById("editor").innerText.trim();
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([txt], { type: "text/plain" }));
-    a.download = (document.getElementById("title").value || "obra") + ".txt";
-    a.click();
-}
-
 async function canalizar() {
     const key = getApiKey();
-    if (!key) { showToast("Chave API necessária!"); return; }
+    if (!key) return;
 
     var vibe = document.getElementById("vibe").value.trim();
     if (!vibe) { showToast("Escreva a sinopse!"); return; }
 
     var btn = document.getElementById("btn-run");
     btn.disabled = true;
-    setProgress(10, "Conectando ao Éter...");
+    setProgress(20, "Invocando o Destino...");
 
-    var h1 = document.getElementById("h1").value.trim();
-    var h2 = document.getElementById("h2").value.trim();
+    var h1 = document.getElementById("h1").value;
+    var h2 = document.getElementById("h2").value;
     var pov = document.getElementById("pov").value;
     var meta = document.getElementById("words").value;
 
-    var prompt = "Você é um escritor literário épico. Escreva uma cena de " + meta + " palavras. Personagens: " + h1 + " e " + h2 + ". POV: " + pov + ". Cena: " + vibe;
+    var prompt = `Aja como um escritor épico. Escreva uma cena literária de ${meta} palavras. Personagens: ${h1} e ${h2}. POV: ${pov}. Contexto: ${vibe}. Escreva apenas a narrativa.`;
+
+    // ENDPOINT CORRIGIDO PARA COMPATIBILIDADE TOTAL
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
 
     try {
-        const res = await fetch(BASE + ":generateContent?key=" + key, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
+
+        const data = await response.json();
         
-        const data = await res.json();
-        if (data.candidates && data.candidates[0].content.parts[0].text) {
-            const texto = data.candidates[0].content.parts[0].text;
-            document.getElementById("editor").innerText += "\n\n" + texto;
-            showToast("Destino Canalizado!");
+        if (data.candidates && data.candidates[0].content) {
+            const result = data.candidates[0].content.parts[0].text;
+            document.getElementById("editor").innerText += (document.getElementById("editor").innerText ? "\n\n" : "") + result;
+            showToast("Canalizado!");
         } else {
-            throw new Error();
+            console.error(data);
+            showToast("Erro na Chave ou Limite atingido.");
         }
-    } catch(e) {
-        showToast("Erro na Canalização. Verifique a chave.");
+    } catch (e) {
+        showToast("Falha na conexão.");
     } finally {
         btn.disabled = false;
         hideProgress();
@@ -456,12 +371,7 @@ async function canalizar() {
     }
 }
 
-window.onload = function() {
-    var lib = getLib();
-    var keys = Object.keys(lib);
-    if (keys.length > 0) loadBook(keys[0]);
-    updateWordCount();
-};
+window.onload = function() { renderBookList(); };
 </script>
 </body>
 </html>
