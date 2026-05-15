@@ -341,8 +341,8 @@ async function canalizar() {
 
     var prompt = `Aja como um escritor épico. Escreva uma cena literária de ${meta} palavras. Personagens: ${h1} e ${h2}. POV: ${pov}. Contexto: ${vibe}. Escreva apenas a narrativa.`;
 
-    // ENDPOINT CORRIGIDO PARA COMPATIBILIDADE TOTAL
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+    // AQUI ESTÁ A MUDANÇA: USANDO O MODELO GEMINI-PRO PARA MÁXIMA COMPATIBILIDADE
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`;
 
     try {
         const response = await fetch(url, {
