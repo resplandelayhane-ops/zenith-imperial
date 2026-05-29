@@ -9,17 +9,17 @@
 :root { --gold: #d4af37; --gold-dark: #a07820; --bright: #ffeaac; --dim: rgba(212,175,55,0.18); --bg: #080705; --surface: #0e0c08; --text: #f0e8d0; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--text); font-family: 'Cormorant Garamond', serif; min-height: 100vh; overflow-x: hidden; }
-body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 9999; opacity: 0.35; }
-.topbar { position: sticky; top: 0; background: rgba(8,7,5,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--dim); padding: 14px 20px; display: flex; align-items: center; gap: 16px; z-index: 50; }
-#title { background: transparent; border: none; border-bottom: 1px solid rgba(212,175,55,0.2); width: 100%; color: var(--bright); padding: 6px 0; outline: none; font-family: 'Cinzel', serif; font-size: 1.1rem; letter-spacing: 2px; font-weight: 700; }
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence ty[...]
+.topbar { position: sticky; top: 0; background: rgba(8,7,5,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--dim); padding: 14px 20px; display: flex; align-items: center; gap: 16px; z[...]
+#title { background: transparent; border: none; border-bottom: 1px solid rgba(212,175,55,0.2); width: 100%; color: var(--bright); padding: 6px 0; outline: none; font-family: 'Cinzel', serif; font-size[...]
 .header { text-align: center; padding: 48px 20px 32px; border-bottom: 1px solid var(--dim); position: relative; }
-.main-title-display { font-family: 'Cinzel', serif; font-size: 3rem; font-weight: 900; background: linear-gradient(180deg, var(--bright) 0%, var(--gold) 60%, var(--gold-dark) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.1; letter-spacing: 2px; }
+.main-title-display { font-family: 'Cinzel', serif; font-size: 3rem; font-weight: 900; background: linear-gradient(180deg, var(--bright) 0%, var(--gold) 60%, var(--gold-dark) 100%); -webkit-background[...]
 .workspace { max-width: 740px; margin: 0 auto; padding: 32px 20px 140px; }
 .label-imperial { font-family: 'Cinzel', serif; color: var(--gold); font-size: 0.62rem; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 10px; display: block; }
-.input-zenith { background: transparent; border: none; border-bottom: 1px solid rgba(212,175,55,0.25); width: 100%; color: var(--text); padding: 12px 0; outline: none; font-family: 'Cormorant Garamond', serif; font-size: 17px; margin-bottom: 20px; }
+.input-zenith { background: transparent; border: none; border-bottom: 1px solid rgba(212,175,55,0.25); width: 100%; color: var(--text); padding: 12px 0; outline: none; font-family: 'Cormorant Garamond[...]
 textarea.input-zenith { height: 110px; resize: none; }
 #editor { min-height: 400px; padding: 28px 0; line-height: 1.9; font-size: 19px; white-space: pre-wrap; outline: none; border-top: 1px solid var(--dim); }
-.btn-canalizar { background: linear-gradient(135deg, var(--bright) 0%, var(--gold) 50%, var(--gold-dark) 100%); color: #000; font-family: 'Cinzel', serif; font-weight: 900; font-size: 0.78rem; letter-spacing: 4px; padding: 20px; width: 100%; border: none; cursor: pointer; text-transform: uppercase; margin-top: 20px; }
+.btn-canalizar { background: linear-gradient(135deg, var(--bright) 0%, var(--gold) 50%, var(--gold-dark) 100%); color: #000; font-family: 'Cinzel', serif; font-weight: 900; font-size: 0.78rem; letter-[...]
 .btn-red { background: #500; color: #fff; padding: 10px; width: 100%; border: none; margin-top: 10px; font-family: 'Cinzel'; cursor: pointer; }
 #loading { display: none; text-align: center; color: var(--gold); margin: 10px 0; font-family: 'Cinzel'; animation: pulse 1.5s infinite; }
 @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
@@ -57,45 +57,24 @@ textarea.input-zenith { height: 110px; resize: none; }
 </div>
 
 <script>
-function getApiKey() {
-    let key = localStorage.getItem("zenith_key");
-    if (!key) {
-        key = prompt("Invoque o Poder Imperial: Insira sua Chave API");
-        if (key) {
-            key = key.trim().replace(/\s/g, '');
-            localStorage.setItem("zenith_key", key);
-        }
-    }
-    return key;
-}
-
-function resetKey() {
-    localStorage.removeItem("zenith_key");
-    alert("Chave removida!");
-    location.reload();
-}
+const BACKEND = 'https://zenith-imperial.onrender.com/api/generate';
 
 async function canalizar() {
-    const key = getApiKey();
-    if (!key) return;
-
     const h1 = document.getElementById('h1').value;
     const h2 = document.getElementById('h2').value;
     const vibe = document.getElementById('vibe').value;
-    const model = document.getElementById('modelSelect').value;
     const loader = document.getElementById('loading');
 
     if (!vibe) { alert("Escreva a sinopse!"); return; }
 
     loader.style.display = "block";
     const prompt = `Aja como um escritor épico. Escreva uma cena rica com ${h1} e ${h2}. Contexto: ${vibe}.`;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
 
     try {
-        const response = await fetch(url, {
+        const response = await fetch(BACKEND, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            body: JSON.stringify({ prompt })
         });
         const data = await response.json();
 
@@ -111,6 +90,8 @@ async function canalizar() {
         loader.style.display = "none";
     }
 }
+
+function resetKey() {}
 </script>
 </body>
 </html>
