@@ -1,569 +1,2133 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ZENITH IMPERIAL</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
-<style>
-:root {
-    --gold: #d4af37;
-    --gold-dark: #a07820;
-    --bright: #ffeaac;
-    --dim: rgba(212,175,55,0.18);
-    --bg: #080705;
-    --surface: #0e0c08;
-    --text: #f0e8d0;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: #000; }
-::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 2px; }
-body { background: var(--bg); color: var(--text); font-family: 'Cormorant Garamond', serif; min-height: 100vh; overflow-x: hidden; }
-#overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 99; backdrop-filter: blur(2px); }
-#overlay.show { display: block; }
-#sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 280px; background: var(--surface); border-right: 1px solid var(--dim); z-index: 100; transform: translateX(-100%); transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; overflow: hidden; }
-#sidebar.open { transform: translateX(0); }
-.sidebar-head { padding: 24px 20px 16px; border-bottom: 1px solid var(--dim); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-.sidebar-head h2 { font-family: 'Cinzel', serif; font-size: 0.75rem; letter-spacing: 4px; color: var(--gold); text-transform: uppercase; }
-.sidebar-close { background: none; border: none; color: var(--gold-dark); cursor: pointer; font-size: 1.2rem; padding: 4px; transition: color 0.2s; }
-.sidebar-close:hover { color: var(--bright); }
-#book-list { flex: 1; overflow-y: auto; padding: 12px; }
-.book-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 3px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; margin-bottom: 6px; }
-.book-item:hover { border-color: var(--dim); background: rgba(212,175,55,0.05); }
-.book-item.active { border-color: var(--gold-dark); background: rgba(212,175,55,0.08); }
-.book-item-title { font-family: 'Cinzel', serif; font-size: 0.72rem; color: var(--bright); letter-spacing: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
-.book-item-meta { font-size: 0.62rem; color: var(--gold-dark); margin-top: 2px; }
-.btn-del-book { background: none; border: none; color: #5a3a1a; cursor: pointer; font-size: 0.9rem; padding: 2px 6px; border-radius: 2px; transition: color 0.2s; flex-shrink: 0; }
-.btn-del-book:hover { color: #c0392b; }
-.sidebar-footer { padding: 16px 12px; border-top: 1px solid var(--dim); flex-shrink: 0; }
-.btn-new-book { width: 100%; background: transparent; border: 1px solid var(--gold-dark); color: var(--gold); font-family: 'Cinzel', serif; font-size: 0.68rem; letter-spacing: 3px; padding: 12px; cursor: pointer; text-transform: uppercase; border-radius: 3px; transition: all 0.2s; }
-.btn-new-book:hover { background: var(--dim); border-color: var(--gold); color: var(--bright); }
-.topbar { position: sticky; top: 0; background: rgba(8,7,5,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--dim); padding: 14px 20px; display: flex; align-items: center; gap: 16px; z-index: 50; }
-.btn-library { background: transparent; border: 1px solid var(--gold-dark); color: var(--gold); font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 3px; padding: 9px 16px; cursor: pointer; text-transform: uppercase; border-radius: 3px; transition: all 0.2s; white-space: nowrap; }
-.btn-library:hover { background: var(--dim); color: var(--bright); border-color: var(--gold); }
-.title-input-wrap { flex: 1; }
-#title { background: transparent; border: none; border-bottom: 1px solid rgba(212,175,55,0.2); width: 100%; color: var(--bright); padding: 6px 0; outline: none; font-family: 'Cinzel', serif; font-size: clamp(0.85rem, 2.5vw, 1.1rem); letter-spacing: 2px; font-weight: 700; }
-#title::placeholder { color: rgba(212,175,55,0.25); }
-.word-counter { font-family: 'Cinzel', serif; font-size: 0.6rem; color: var(--gold-dark); letter-spacing: 2px; white-space: nowrap; }
-.header { text-align: center; padding: 48px 20px 32px; border-bottom: 1px solid var(--dim); position: relative; }
-.header::after { content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); width: 120px; height: 1px; background: var(--gold); }
-.brand { font-family: 'Cinzel', serif; font-size: clamp(0.55rem, 2vw, 0.7rem); letter-spacing: 8px; color: var(--gold-dark); text-transform: uppercase; margin-bottom: 14px; }
-.main-title-display { font-family: 'Cinzel', serif; font-size: clamp(2rem, 8vw, 3.6rem); font-weight: 900; background: linear-gradient(180deg, var(--bright) 0%, var(--gold) 60%, var(--gold-dark) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.1; letter-spacing: 2px; }
-.workspace { max-width: 740px; margin: 0 auto; padding: 32px 20px 140px; }
-.field-group { margin-bottom: 28px; }
-.label-imperial { font-family: 'Cinzel', serif; color: var(--gold); font-size: 0.62rem; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 10px; display: block; }
-.input-zenith { background: transparent; border: none; border-bottom: 1px solid rgba(212,175,55,0.25); width: 100%; color: var(--text); padding: 12px 0; outline: none; font-family: 'Cormorant Garamond', serif; font-size: 17px; transition: border-color 0.2s; }
-.input-zenith:focus { border-bottom-color: var(--gold); }
-.input-zenith::placeholder { color: rgba(240,232,208,0.2); }
-input[type="number"].input-zenith { -moz-appearance: textfield; }
-input[type="number"].input-zenith::-webkit-outer-spin-button, input[type="number"].input-zenith::-webkit-inner-spin-button { -webkit-appearance: none; }
-select.input-zenith { cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23d4af37' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; padding-right: 28px; }
-select.input-zenith option { background: #0e0c08; color: var(--text); }
-textarea.input-zenith { resize: none; height: 110px; line-height: 1.7; font-style: italic; }
-.config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 28px; }
-.protagonists-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 28px; }
-.divider { display: flex; align-items: center; gap: 16px; margin: 32px 0; }
-.divider-line { flex: 1; height: 1px; background: var(--dim); }
-.divider-diamond { width: 6px; height: 6px; background: var(--gold-dark); transform: rotate(45deg); flex-shrink: 0; }
-.editor-label { font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 4px; color: var(--gold-dark); text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
-.editor-label::after { content: ''; flex: 1; height: 1px; background: var(--dim); }
-#editor { min-height: 480px; padding: 28px 0; line-height: 1.9; font-size: 19px; white-space: pre-wrap; outline: none; color: var(--text); font-family: 'Cormorant Garamond', serif; caret-color: var(--gold); word-break: break-word; overflow-wrap: break-word; }
-#editor:empty::before { content: 'Sua obra nascerá aqui...'; color: rgba(212,175,55,0.15); font-style: italic; pointer-events: none; }
-.progress-wrap { margin: 24px 0 8px; display: none; }
-.progress-wrap.visible { display: block; }
-.progress-label { font-family: 'Cinzel', serif; font-size: 0.58rem; letter-spacing: 3px; color: var(--gold-dark); margin-bottom: 8px; text-transform: uppercase; }
-.progress-bar-bg { height: 2px; background: rgba(212,175,55,0.1); border-radius: 1px; overflow: hidden; }
-.progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold-dark), var(--bright)); border-radius: 1px; transition: width 0.3s ease; width: 0%; animation: shimmer 1.5s infinite; }
-@keyframes shimmer { 0%,100%{ filter: brightness(1); } 50%{ filter: brightness(1.4); } }
-.btn-canalizar { background: linear-gradient(135deg, var(--bright) 0%, var(--gold) 50%, var(--gold-dark) 100%); color: #000; font-family: 'Cinzel', serif; font-weight: 900; font-size: 0.78rem; letter-spacing: 4px; padding: 20px 40px; border-radius: 3px; width: 100%; margin-top: 32px; border: none; cursor: pointer; text-transform: uppercase; position: relative; overflow: hidden; transition: all 0.3s; box-shadow: 0 0 30px rgba(212,175,55,0.15); }
-.btn-canalizar::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.25) 50%, transparent 100%); transform: translateX(-100%); transition: transform 0.5s; }
-.btn-canalizar:hover::before { transform: translateX(100%); }
-.btn-canalizar:hover { box-shadow: 0 0 50px rgba(212,175,55,0.3); }
-.btn-canalizar:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
-.btn-canalizar:disabled::before { display: none; }
-.actions-row { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
-.btn-action { flex: 1; min-width: 110px; background: transparent; border: 1px solid var(--dim); color: var(--gold-dark); font-family: 'Cinzel', serif; font-size: 0.58rem; letter-spacing: 3px; padding: 12px; cursor: pointer; text-transform: uppercase; border-radius: 3px; transition: all 0.2s; }
-.btn-action:hover { border-color: var(--gold-dark); color: var(--gold); background: rgba(212,175,55,0.05); }
-.btn-action.primary { border-color: var(--gold-dark); color: var(--gold); }
-#chapters-panel { margin-top: 32px; display: none; }
-.chapter-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--dim); }
-.chapter-info { cursor: pointer; flex: 1; }
-.chapter-title { font-family: 'Cinzel', serif; font-size: 0.72rem; color: var(--bright); letter-spacing: 1px; }
-.chapter-meta { font-size: 0.6rem; color: var(--gold-dark); margin-top: 3px; }
-.btn-del-cap { background: none; border: none; color: #5a3a1a; cursor: pointer; font-size: 0.85rem; padding: 4px 8px; transition: color 0.2s; }
-.btn-del-cap:hover { color: #c0392b; }
-#toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface); border: 1px solid var(--gold-dark); color: var(--bright); font-family: 'Cinzel', serif; font-size: 0.65rem; letter-spacing: 2px; padding: 14px 28px; border-radius: 3px; opacity: 0; transition: all 0.3s; pointer-events: none; z-index: 200; white-space: nowrap; }
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-@media (max-width: 520px) { .protagonists-grid, .config-grid { grid-template-columns: 1fr; } .actions-row { flex-direction: column; } #sidebar { width: 85vw; } }
-</style>
-</head>
-<body>
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Crown, LayoutDashboard, Library, PenTool, Settings, Brain, BookOpen, Map,
+  GitBranch, GraduationCap, Armchair, Lock, Plus, Trash2, ChevronRight,
+  X, Loader2, Key, AlertCircle, Save, Sparkles, ArrowLeft, Menu, Feather,
+  Check, Eye, EyeOff, Pause, Play, Users, MapPin, Shield, Package, Clock,
+  ShieldCheck, Zap, Skull, Heart, Layers, Flag, KeyRound, Pencil,
+  Milestone, Wand2, MessageCircle, Send, StickyNote, RotateCcw, Star
+} from 'lucide-react';
 
-<div id="overlay" onclick="closeSidebar()"></div>
-<div id="sidebar">
-    <div class="sidebar-head">
-        <h2>Gaveta Literária</h2>
-        <button class="sidebar-close" onclick="closeSidebar()">✕</button>
-    </div>
-    <div id="book-list"></div>
-    <div class="sidebar-footer">
-        <button class="btn-new-book" onclick="newBook()">+ Nova Obra</button>
-    </div>
-</div>
+/* =========================================================
+   CONSTANTES
+========================================================= */
 
-<div class="topbar">
-    <button class="btn-library" onclick="openSidebar()">☰ Biblioteca</button>
-    <div class="title-input-wrap">
-        <input id="title" placeholder="Título da Obra..." oninput="saveData()">
-    </div>
-    <div class="word-counter" id="word-counter">0 palavras</div>
-</div>
+const SIDEBAR_ITEMS = [
+  { id: 'painel', label: 'Painel Imperial', icon: LayoutDashboard, active: true },
+  { id: 'gaveta', label: 'Gaveta Literária', icon: Library, active: true },
+  { id: 'forjar', label: 'Forjar História', icon: PenTool, active: true },
+  { id: 'forjar-imperio', label: 'Forjar Império', icon: Crown, active: true },
+  { id: 'biblioteca', label: 'Biblioteca Imperial', icon: BookOpen, active: true },
+  { id: 'atlas', label: 'Atlas de Universos', icon: Map, active: true },
+  { id: 'planejador', label: 'Planejador de Saga', icon: GitBranch, active: true },
+  { id: 'mentor', label: 'Mentor Literário', icon: GraduationCap, active: true },
+  { id: 'sala-autor', label: 'Sala do Autor', icon: Armchair, active: true },
+  { id: 'config', label: 'Configurações', icon: Settings, active: true },
+  { id: 'mente-suprema', label: 'Mente Suprema', icon: Brain, active: true },
+];
 
-<div class="header">
-    <div class="brand">Ateliê de Narrativas</div>
-    <div class="main-title-display">ZENITH IMPERIAL</div>
-</div>
+const GENEROS = [
+  'Fantasia', 'Ficção Científica', 'Romance', 'Suspense/Thriller', 'Terror',
+  'Drama', 'Aventura', 'Mistério', 'Histórico', 'Distopia', 'Young Adult', 'Literário'
+];
 
-<div class="workspace">
+const PONTOS_DE_VISTA = [
+  'Primeira Pessoa',
+  'Terceira Pessoa Limitada',
+  'Terceira Pessoa Onisciente',
+  'Múltiplos Narradores (POV Alternado)'
+];
 
-    <div class="field-group">
-        <label class="label-imperial">Protagonistas</label>
-        <div class="protagonists-grid">
-            <div>
-                <label class="label-imperial" style="font-size:0.5rem;color:var(--gold-dark);margin-bottom:6px">Primeiro</label>
-                <input id="h1" class="input-zenith" placeholder="Nome do protagonista" oninput="saveData()">
-            </div>
-            <div>
-                <label class="label-imperial" style="font-size:0.5rem;color:var(--gold-dark);margin-bottom:6px">Segundo</label>
-                <input id="h2" class="input-zenith" placeholder="Nome do protagonista" oninput="saveData()">
-            </div>
-        </div>
-    </div>
+const TONS = [
+  'Épico e Grandioso', 'Sombrio e Intenso', 'Leve e Esperançoso',
+  'Melancólico e Reflexivo', 'Tenso e Urgente', 'Satírico e Irônico',
+  'Romântico', 'Filosófico'
+];
 
-    <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
+const CAPITULOS_SUGERIDOS = [5, 10, 20, 50, 100, 300, 500, 1000];
 
-    <div class="field-group">
-        <label class="label-imperial">Configurações da Obra</label>
-        <div class="config-grid">
-            <div>
-                <label class="label-imperial" style="font-size:0.5rem;color:var(--gold-dark);margin-bottom:6px">Ponto de Vista</label>
-                <select id="pov" class="input-zenith" onchange="saveData()">
-                    <option value="Terceira Pessoa Onisciente">Terceira Pessoa (Onisciente)</option>
-                    <option value="Terceira Pessoa Limitado">Terceira Pessoa (Limitado)</option>
-                    <option value="Primeira Pessoa">Primeira Pessoa</option>
-                    <option value="Segunda Pessoa">Segunda Pessoa</option>
-                </select>
-            </div>
-            <div>
-                <label class="label-imperial" style="font-size:0.5rem;color:var(--gold-dark);margin-bottom:6px">Nº de Palavras</label>
-                <input id="words" type="number" min="100" max="10000" step="100" value="1500" class="input-zenith" placeholder="Ex: 1500" oninput="saveData()">
-            </div>
-        </div>
-    </div>
-
-    <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
-
-    <div class="field-group">
-        <label class="label-imperial">Sinopse / Ato</label>
-        <textarea id="vibe" class="input-zenith" placeholder="Descreva o que acontece nesta cena ou capítulo..." oninput="saveData()"></textarea>
-        <div style="font-size:0.58rem;color:rgba(212,175,55,0.25);margin-top:6px;font-style:italic;letter-spacing:1px;">A sinopse é sempre narrada em terceira pessoa, independente do POV escolhido.</div>
-    </div>
-
-    <div class="divider"><div class="divider-line"></div><div class="divider-diamond"></div><div class="divider-line"></div></div>
-
-    <div class="editor-wrap">
-        <div class="editor-label">Manuscrito</div>
-        <div id="editor" contenteditable="true" oninput="saveData(); updateWordCount();" spellcheck="false"></div>
-    </div>
-
-    <div class="progress-wrap" id="progress-wrap">
-        <div class="progress-label" id="progress-label">Canalizando...</div>
-        <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
-    </div>
-
-    <button onclick="canalizar()" id="btn-run" class="btn-canalizar">Canalizar Destino</button>
-
-    <div class="actions-row">
-        <button class="btn-action primary" onclick="salvarCapitulo()">Salvar Capitulo</button>
-        <button class="btn-action" onclick="copyText()">Copiar Texto</button>
-        <button class="btn-action" onclick="exportTxt()">Exportar .txt</button>
-        <button class="btn-action" onclick="clearEditor()">Limpar Editor</button>
-    </div>
-
-    <div id="chapters-panel">
-        <div class="editor-label" style="margin-top:32px;">Capitulos Salvos</div>
-        <div id="chapters-list"></div>
-    </div>
-
-</div>
-
-<div id="toast"></div>
-
-<script>
-var API_KEY = "AIzaSyApp4Ss_5G-HkHR2DJwGQABCqB46uFFvMY";
-var MODEL   = "gemini-2.5-flash";
-var BASE    = "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL;
-var currentBookId = null;
-
-function showToast(msg, ms) {
-    ms = ms || 2500;
-    var t = document.getElementById("toast");
-    t.textContent = msg;
-    t.classList.add("show");
-    setTimeout(function() { t.classList.remove("show"); }, ms);
-}
-
-function updateWordCount() {
-    var txt = document.getElementById("editor").innerText.trim();
-    var n   = txt ? txt.split(/\s+/).length : 0;
-    document.getElementById("word-counter").textContent = n.toLocaleString("pt-BR") + " palavras";
-}
-
-function setProgress(pct, label) {
-    document.getElementById("progress-wrap").classList.add("visible");
-    document.getElementById("progress-fill").style.width = pct + "%";
-    document.getElementById("progress-label").textContent = label || "Canalizando...";
-}
-
-function hideProgress() {
-    document.getElementById("progress-wrap").classList.remove("visible");
-    document.getElementById("progress-fill").style.width = "0%";
-}
-
-function getLib()     { return JSON.parse(localStorage.getItem("zenith_v3") || "{}"); }
-function saveLib(lib) { localStorage.setItem("zenith_v3", JSON.stringify(lib)); }
-function genId()      { return "b_" + Date.now() + "_" + Math.random().toString(36).slice(2,6); }
-
-function newBook() {
-    var id  = genId();
-    var lib = getLib();
-    lib[id] = { id: id, title: "Nova Obra", h1: "", h2: "", pov: "Terceira Pessoa Onisciente", words: "1500", vibe: "", chapters: [], createdAt: Date.now() };
-    saveLib(lib);
-    loadBook(id);
-    closeSidebar();
-    showToast("Nova obra criada");
-}
-
-function loadBook(id) {
-    var lib  = getLib();
-    var book = lib[id];
-    if (!book) return;
-    currentBookId = id;
-    document.getElementById("title").value = book.title || "";
-    document.getElementById("h1").value    = book.h1    || "";
-    document.getElementById("h2").value    = book.h2    || "";
-    document.getElementById("pov").value   = book.pov   || "Terceira Pessoa Onisciente";
-    document.getElementById("words").value = book.words || "1500";
-    document.getElementById("vibe").value  = book.vibe  || "";
-    document.getElementById("editor").innerText = "";
-    updateWordCount();
-    renderBookList();
-    renderChapters();
-}
-
-function saveData() {
-    if (!currentBookId) currentBookId = genId();
-    var lib = getLib();
-    if (!lib[currentBookId]) lib[currentBookId] = { id: currentBookId, chapters: [], createdAt: Date.now() };
-    var b      = lib[currentBookId];
-    b.title    = document.getElementById("title").value  || "Sem titulo";
-    b.h1       = document.getElementById("h1").value;
-    b.h2       = document.getElementById("h2").value;
-    b.pov      = document.getElementById("pov").value;
-    b.words    = document.getElementById("words").value;
-    b.vibe     = document.getElementById("vibe").value;
-    b.savedAt  = Date.now();
-    saveLib(lib);
-    renderBookList();
-}
-
-function salvarCapitulo() {
-    var texto = document.getElementById("editor").innerText.trim();
-    if (!texto) { showToast("Escreva ou gere um capitulo primeiro!"); return; }
-    if (!currentBookId) saveData();
-    var lib  = getLib();
-    var book = lib[currentBookId];
-    if (!book.chapters) book.chapters = [];
-    var num = book.chapters.length + 1;
-    var wc  = texto.split(/\s+/).filter(function(w) { return w.length > 0; }).length;
-    book.chapters.push({ id: genId(), num: num, title: "Capitulo " + num, content: texto, words: wc, savedAt: Date.now() });
-    book.savedAt = Date.now();
-    saveLib(lib);
-    document.getElementById("editor").innerText = "";
-    updateWordCount();
-    renderBookList();
-    renderChapters();
-    showToast("Capitulo " + num + " salvo! Editor pronto para o proximo.");
-}
-
-function renderChapters() {
-    var panel = document.getElementById("chapters-panel");
-    var list  = document.getElementById("chapters-list");
-    if (!currentBookId) { panel.style.display = "none"; return; }
-    var lib  = getLib();
-    var caps = (lib[currentBookId] && lib[currentBookId].chapters) ? lib[currentBookId].chapters : [];
-    if (caps.length === 0) { panel.style.display = "none"; return; }
-    panel.style.display = "block";
-    var html = "";
-    for (var i = 0; i < caps.length; i++) {
-        var c = caps[i];
-        html += '<div class="chapter-item">' +
-            '<div class="chapter-info" onclick="lerCapitulo(\'' + c.id + '\')">' +
-                '<div class="chapter-title">' + c.title + '</div>' +
-                '<div class="chapter-meta">' + c.words.toLocaleString("pt-BR") + ' palavras</div>' +
-            '</div>' +
-            '<button class="btn-del-cap" onclick="deletarCapitulo(\'' + c.id + '\')" title="Apagar">x</button>' +
-        '</div>';
-    }
-    list.innerHTML = html;
-}
-
-function lerCapitulo(capId) {
-    var lib  = getLib();
-    var book = lib[currentBookId];
-    var cap  = null;
-    if (book && book.chapters) {
-        for (var i = 0; i < book.chapters.length; i++) {
-            if (book.chapters[i].id === capId) { cap = book.chapters[i]; break; }
-        }
-    }
-    if (!cap) return;
-    var atual = document.getElementById("editor").innerText.trim();
-    if (atual && !confirm("O editor tem texto nao salvo. Substituir?")) return;
-    document.getElementById("editor").innerText = cap.content;
-    updateWordCount();
-    window.scrollTo({ top: document.querySelector(".editor-wrap").offsetTop - 80, behavior: "smooth" });
-    showToast("Lendo: " + cap.title);
-}
-
-function deletarCapitulo(capId) {
-    if (!confirm("Apagar este capitulo? Nao pode ser desfeito.")) return;
-    var lib  = getLib();
-    var book = lib[currentBookId];
-    book.chapters = book.chapters.filter(function(c) { return c.id !== capId; });
-    for (var i = 0; i < book.chapters.length; i++) {
-        book.chapters[i].num   = i + 1;
-        book.chapters[i].title = "Capitulo " + (i + 1);
-    }
-    saveLib(lib);
-    renderChapters();
-    renderBookList();
-    showToast("Capitulo removido");
-}
-
-function deleteBook(id, e) {
-    e.stopPropagation();
-    var lib  = getLib();
-    var name = (lib[id] && lib[id].title) ? lib[id].title : "esta obra";
-    if (!confirm("Apagar \"" + name + "\" e todos os seus capitulos?")) return;
-    delete lib[id];
-    saveLib(lib);
-    if (currentBookId === id) {
-        var keys = Object.keys(lib);
-        if (keys.length > 0) { loadBook(keys[keys.length - 1]); }
-        else { currentBookId = null; clearFields(); document.getElementById("chapters-panel").style.display = "none"; }
-    }
-    renderBookList();
-    showToast("Obra removida");
-}
-
-function clearFields() {
-    var ids = ["title","h1","h2","vibe"];
-    for (var i = 0; i < ids.length; i++) document.getElementById(ids[i]).value = "";
-    document.getElementById("editor").innerText = "";
-    updateWordCount();
-}
-
-function renderBookList() {
-    var lib   = getLib();
-    var list  = document.getElementById("book-list");
-    var books = Object.values(lib).sort(function(a, b) { return (b.savedAt || b.createdAt) - (a.savedAt || a.createdAt); });
-    if (books.length === 0) {
-        list.innerHTML = '<div style="color:rgba(212,175,55,0.25);font-size:0.65rem;letter-spacing:2px;text-align:center;padding:32px 16px;font-family:Cinzel,serif">NENHUMA OBRA</div>';
-        return;
-    }
-    var html = "";
-    for (var i = 0; i < books.length; i++) {
-        var b        = books[i];
-        var caps     = b.chapters || [];
-        var capCount = caps.length;
-        var wordCount = 0;
-        for (var j = 0; j < caps.length; j++) wordCount += (caps[j].words || 0);
-        var isActive = b.id === currentBookId;
-        html += '<div class="book-item ' + (isActive ? "active" : "") + '" onclick="loadBook(\'' + b.id + '\'); closeSidebar();">' +
-            '<div style="overflow:hidden">' +
-                '<div class="book-item-title">' + (b.title || "Sem titulo") + '</div>' +
-                '<div class="book-item-meta">' + capCount + ' cap. - ' + wordCount.toLocaleString("pt-BR") + ' palavras</div>' +
-            '</div>' +
-            '<button class="btn-del-book" onclick="deleteBook(\'' + b.id + '\', event)" title="Apagar">x</button>' +
-        '</div>';
-    }
-    list.innerHTML = html;
-}
-
-function openSidebar()  { document.getElementById("sidebar").classList.add("open"); document.getElementById("overlay").classList.add("show"); renderBookList(); }
-function closeSidebar() { document.getElementById("sidebar").classList.remove("open"); document.getElementById("overlay").classList.remove("show"); }
-
-function clearEditor() {
-    if (!document.getElementById("editor").innerText.trim()) { showToast("Editor ja esta vazio"); return; }
-    if (!confirm("Limpar o editor? Os capitulos ja salvos nao serao afetados.")) return;
-    document.getElementById("editor").innerText = "";
-    updateWordCount();
-    showToast("Editor limpo");
-}
-
-function copyText() {
-    var txt = document.getElementById("editor").innerText.trim();
-    if (!txt) { showToast("Nada para copiar"); return; }
-    navigator.clipboard.writeText(txt).then(function() { showToast("Copiado!"); }).catch(function() { showToast("Falha ao copiar"); });
-}
-
-function exportTxt() {
-    var txt   = document.getElementById("editor").innerText.trim();
-    var title = document.getElementById("title").value || "zenith-obra";
-    if (!txt) { showToast("Nada para exportar"); return; }
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([txt], { type: "text/plain;charset=utf-8" }));
-    a.download = title.replace(/\s+/g, "_") + ".txt";
-    a.click();
-    URL.revokeObjectURL(a.href);
-    showToast("Exportado!");
-}
-
-async function canalizar() {
-    var vibe = document.getElementById("vibe").value.trim();
-    var h1   = document.getElementById("h1").value.trim();
-    var h2   = document.getElementById("h2").value.trim();
-    var pov  = document.getElementById("pov").value;
-    var meta = parseInt(document.getElementById("words").value) || 1500;
-
-    if (!vibe) { showToast("Escreva a sinopse do ato!"); return; }
-
-    var btn = document.getElementById("btn-run");
-    btn.disabled    = true;
-    btn.textContent = "Canalizando...";
-    setProgress(10, "Invocando a narrativa...");
-
-    var prots  = [h1, h2].filter(function(x) { return x.length > 0; }).join(" e ") || "os protagonistas";
-    var prompt = "Voce e um escritor literario epico de romances. Escreva uma cena completa de aproximadamente " + meta + " palavras.\n\n" +
-        "PERSONAGENS: " + prots + "\n" +
-        "PONTO DE VISTA: " + pov + "\n" +
-        "CENA: " + vibe + "\n\n" +
-        "INSTRUCOES ABSOLUTAS:\n" +
-        "- Escreva APENAS o texto da cena, sem titulos, sem comentarios, sem introducoes\n" +
-        "- Use o ponto de vista: " + pov + "\n" +
-        "- Escreva no minimo " + meta + " palavras\n" +
-        "- Prosa rica, imersiva, epica e emocionante\n" +
-        "- Comece diretamente na narrativa, sem preambulos";
-
-    var ok = false;
-    try {
-        setProgress(25, "Conectando...");
-        ok = await doStreaming(prompt, meta);
-        if (!ok) {
-            setProgress(55, "Modo alternativo...");
-            ok = await doFallback(prompt);
-        }
-    } catch(e) { console.error(e); }
-
-    if (!ok) showToast("Falha na API. Verifique sua chave ou tente novamente.", 4000);
-
-    hideProgress();
-    btn.textContent = "Canalizar Destino";
-    btn.disabled    = false;
-    updateWordCount();
-    saveData();
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-}
-
-async function doStreaming(prompt, meta) {
-    var res;
-    try {
-        res = await fetch(BASE + ":streamGenerateContent?alt=sse", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "x-goog-api-key": API_KEY },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.9, maxOutputTokens: 8192, topP: 0.95 } })
-        });
-    } catch(e) { return false; }
-    if (!res.ok) return false;
-
-    var editor  = document.getElementById("editor");
-    var prefix  = editor.innerText.trim() ? editor.innerText.trim() + "\n\n" : "";
-    var reader  = res.body.getReader();
-    var decoder = new TextDecoder();
-    var buf     = "";
-    var acum    = "";
-    var chars   = 0;
-    var last    = 0;
-    var est     = meta * 5.5;
-
-    setProgress(40, "Escrevendo...");
-
-    while (true) {
-        var r = await reader.read();
-        if (r.done) break;
-        buf += decoder.decode(r.value, { stream: true });
-        var lines = buf.split("\n");
-        buf = lines.pop();
-        for (var i = 0; i < lines.length; i++) {
-            var line = lines[i];
-            if (line.indexOf("data: ") !== 0) continue;
-            var raw = line.slice(6).trim();
-            if (raw === "[DONE]") break;
-            try {
-                var parsed = JSON.parse(raw);
-                var chunk  = (parsed && parsed.candidates && parsed.candidates[0] && parsed.candidates[0].content && parsed.candidates[0].content.parts && parsed.candidates[0].content.parts[0] && parsed.candidates[0].content.parts[0].text) ? parsed.candidates[0].content.parts[0].text : "";
-                if (chunk) {
-                    acum  += chunk;
-                    chars += chunk.length;
-                    var now = performance.now();
-                    if (now - last > 120) { editor.innerText = prefix + acum; last = now; }
-                    setProgress(Math.min(95, 40 + (chars / est) * 55), "Escrevendo... " + Math.round(chars / 5.5).toLocaleString("pt-BR") + " palavras");
-                }
-            } catch(_) {}
-        }
-    }
-    editor.innerText = prefix + acum;
-    return editor.innerText.trim().length > 0;
-}
-
-async function doFallback(prompt) {
-    var res;
-    try {
-        res = await fetch(BASE + ":generateContent", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "x-goog-api-key": API_KEY },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.9, maxOutputTokens: 8192, topP: 0.95 } })
-        });
-    } catch(e) { return false; }
-    if (!res.ok) return false;
-    var data = await res.json();
-    if (data.error) return false;
-    var texto = (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text) ? data.candidates[0].content.parts[0].text : null;
-    if (!texto) return false;
-    var editor   = document.getElementById("editor");
-    var existing = editor.innerText.trim();
-    editor.innerText = existing ? existing + "\n\n" + texto : texto;
-    return true;
-}
-
-window.onload = function() {
-    var lib   = getLib();
-    var books = Object.values(lib).sort(function(a, b) { return (b.savedAt || b.createdAt || 0) - (a.savedAt || a.createdAt || 0); });
-    if (books.length > 0) {
-        loadBook(books[0].id);
-    } else {
-        var id = genId();
-        var nl = {};
-        nl[id] = { id: id, title: "", h1: "", h2: "", pov: "Terceira Pessoa Onisciente", words: "1500", vibe: "", chapters: [], createdAt: Date.now() };
-        saveLib(nl);
-        currentBookId = id;
-        renderBookList();
-        renderChapters();
-    }
-    updateWordCount();
+const CAPA_GRADIENTES = {
+  'Fantasia': 'linear-gradient(135deg,#3a2a0f,#7a5a1a,#1a1208)',
+  'Ficção Científica': 'linear-gradient(135deg,#0a1a2a,#1a3a5a,#0a0a14)',
+  'Romance': 'linear-gradient(135deg,#3a1020,#6a2030,#1a0a10)',
+  'Suspense/Thriller': 'linear-gradient(135deg,#1a1a1a,#3a3a2a,#0a0a0a)',
+  'Terror': 'linear-gradient(135deg,#1a0505,#3a0a0a,#050505)',
+  'Drama': 'linear-gradient(135deg,#2a2010,#4a3a1a,#100a05)',
+  'Aventura': 'linear-gradient(135deg,#1a2a10,#3a5a1a,#0a140a)',
+  'Mistério': 'linear-gradient(135deg,#15101f,#2f2040,#0a0510)',
+  'Histórico': 'linear-gradient(135deg,#2a1f10,#4a3520,#140d05)',
+  'Distopia': 'linear-gradient(135deg,#1a1a1a,#3a2a1a,#0a0a0a)',
+  'Young Adult': 'linear-gradient(135deg,#2a1530,#4a2550,#150a1a)',
+  'Literário': 'linear-gradient(135deg,#1f1810,#3a2f1a,#0d0a05)',
 };
-</script>
-</body>
-</html>
+const CAPA_DEFAULT = 'linear-gradient(135deg,#1a1610,#2a2410,#0a0805)';
+
+const STATUS_INFO = {
+  'em-andamento': { label: 'Em Andamento', color: '#d4af37' },
+  'concluida': { label: 'Concluída', color: '#7fd49a' },
+  'pausada': { label: 'Pausada', color: '#9a958a' },
+};
+
+const MEMORIA_VAZIA = { personagens: [], locais: [], faccoes: [], objetos: [], eventos: [] };
+
+const MEMORIA_CATEGORIAS = [
+  { chave: 'personagens', label: 'Personagens', icon: Users },
+  { chave: 'locais', label: 'Locais', icon: MapPin },
+  { chave: 'faccoes', label: 'Facções', icon: Shield },
+  { chave: 'objetos', label: 'Objetos', icon: Package },
+  { chave: 'eventos', label: 'Eventos', icon: Clock },
+];
+
+const CAMPOS_IMPERIO = [
+  { chave: 'descricaoMundo', label: 'Mundo', icon: Map, tipo: 'texto', placeholder: 'Geografia, cosmologia e regras fundamentais deste universo...' },
+  { chave: 'sistemaDePoder', label: 'Sistema de Poder', icon: Zap, tipo: 'texto', placeholder: 'Magia, tecnologia, hierarquias de poder...' },
+  { chave: 'reinos', label: 'Reinos', icon: Crown, tipo: 'lista', placeholder: 'Um reino por linha' },
+  { chave: 'faccoes', label: 'Facções', icon: Shield, tipo: 'lista', placeholder: 'Uma facção por linha' },
+  { chave: 'racas', label: 'Raças', icon: Users, tipo: 'lista', placeholder: 'Uma raça por linha' },
+  { chave: 'religioes', label: 'Religiões', icon: BookOpen, tipo: 'lista', placeholder: 'Uma religião por linha' },
+  { chave: 'misterios', label: 'Mistérios', icon: Eye, tipo: 'texto', placeholder: 'Mistérios não resolvidos do universo...' },
+  { chave: 'segredos', label: 'Segredos', icon: KeyRound, tipo: 'texto', placeholder: 'Segredos guardados por personagens ou facções...' },
+  { chave: 'conflitos', label: 'Conflitos', icon: Flag, tipo: 'lista', placeholder: 'Um conflito por linha' },
+  { chave: 'antagonistas', label: 'Antagonistas', icon: Skull, tipo: 'lista', placeholder: 'Um antagonista por linha' },
+  { chave: 'romances', label: 'Romances', icon: Heart, tipo: 'texto', placeholder: 'Relações românticas planejadas...' },
+  { chave: 'subtramas', label: 'Subtramas', icon: Layers, tipo: 'texto', placeholder: 'Subtramas planejadas...' },
+  { chave: 'plotTwists', label: 'Plot Twists', icon: Sparkles, tipo: 'texto', placeholder: 'Reviravoltas planejadas (a IA usará com o timing correto)...' },
+  { chave: 'finalPlanejado', label: 'Final Planejado', icon: Flag, tipo: 'texto', placeholder: 'Como esta saga deve terminar...' },
+];
+
+function camposImperioVazios() {
+  const obj = {};
+  CAMPOS_IMPERIO.forEach((c) => { obj[c.chave] = ''; });
+  return obj;
+}
+
+const ANALISE_CATEGORIAS = [
+  { chave: 'ritmo', label: 'Ritmo' },
+  { chave: 'emocao', label: 'Emoção' },
+  { chave: 'dialogos', label: 'Diálogos' },
+  { chave: 'tensao', label: 'Tensão' },
+  { chave: 'construcaoMundo', label: 'Construção de Mundo' },
+  { chave: 'consistencia', label: 'Consistência' },
+  { chave: 'qualidadeGeral', label: 'Qualidade Geral' },
+];
+
+const ACOES_MENTE_SUPREMA = [
+  { id: 'planejar', label: 'Planejar Próximos Capítulos', icon: Milestone },
+  { id: 'personagem', label: 'Gerar Novo Personagem', icon: Users },
+  { id: 'plottwist', label: 'Criar Plot Twist', icon: Sparkles },
+  { id: 'dialogos', label: 'Melhorar Diálogos do Último Capítulo', icon: Wand2 },
+  { id: 'consistencia', label: 'Analisar Consistência Geral', icon: ShieldCheck },
+];
+
+function paraTexto(v) {
+  if (v == null) return '';
+  if (typeof v === 'string') return v;
+  if (Array.isArray(v)) return v.map((x) => (typeof x === 'string' ? x : JSON.stringify(x))).join(', ');
+  if (typeof v === 'object') return JSON.stringify(v);
+  return String(v);
+}
+
+const NUCLEO_ESCRITORA_SUPREMA = [
+  'Você é uma escritora literária de elite, com décadas de experiência publicando romances aclamados. Sua escrita NUNCA parece gerada por uma IA.',
+  'REGRAS ABSOLUTAS DE ESTILO:',
+  '- Mostre, não explique. Emoções surgem através de ações, expressões, diálogos e decisões - nunca por exposição direta.',
+  '- Cada personagem tem voz própria: maneira de falar, pensar e agir reconhecível mesmo sem identificação de nome.',
+  '- Evite frases repetitivas, descrições genéricas, diálogos artificiais, emoções superficiais e finais vazios.',
+  '- Mantenha ritmo natural, tensão crescente e profundidade psicológica.',
+  '- Cada capítulo termina com propósito narrativo - nunca enrolação ou preenchimento artificial.',
+  '- Lembre-se constantemente de medos, desejos, traumas, objetivos e relacionamentos estabelecidos anteriormente na história.',
+  '- A qualidade deve permanecer idêntica do primeiro ao último capítulo, não importa o tamanho da saga.'
+].join('\n');
+
+const STORAGE_KEYS = { stories: 'isf_stories_v1', apiKey: 'isf_api_key_v1', universos: 'isf_universos_v1', notas: 'isf_notas_v1' };
+
+/* =========================================================
+   STORAGE HELPERS
+========================================================= */
+
+function carregarHistorias() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.stories);
+    const lista = raw ? JSON.parse(raw) : [];
+    return lista.map((s) => ({
+      ...s,
+      memoria: s.memoria || { personagens: [], locais: [], faccoes: [], objetos: [], eventos: [] },
+      planejamento: s.planejamento || { arcos: [] },
+      ultimaAnalise: s.ultimaAnalise || null,
+    }));
+  } catch (e) { return []; }
+}
+function salvarHistorias(stories) {
+  try { localStorage.setItem(STORAGE_KEYS.stories, JSON.stringify(stories)); } catch (e) {}
+}
+function carregarChaveApi() {
+  try { return localStorage.getItem(STORAGE_KEYS.apiKey) || ''; } catch (e) { return ''; }
+}
+function salvarChaveApi(key) {
+  try { localStorage.setItem(STORAGE_KEYS.apiKey, key); } catch (e) {}
+}
+function carregarUniversos() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.universos);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return []; }
+}
+function salvarUniversos(universos) {
+  try { localStorage.setItem(STORAGE_KEYS.universos, JSON.stringify(universos)); } catch (e) {}
+}
+function carregarNotas() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.notas);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return []; }
+}
+function salvarNotas(notas) {
+  try { localStorage.setItem(STORAGE_KEYS.notas, JSON.stringify(notas)); } catch (e) {}
+}
+
+/* =========================================================
+   UTILS
+========================================================= */
+
+function novoId() {
+  return 'story_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+}
+function contarPalavras(texto) {
+  return (texto || '').trim().split(/\s+/).filter(Boolean).length;
+}
+function formatarData(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+/* =========================================================
+   CHAMADA À API ANTHROPIC
+   A chave NUNCA fica fixa no código. Ela é lida do localStorage,
+   preenchida pelo usuário/cliente em Configurações.
+========================================================= */
+
+async function chamarIA({ apiKey, systemPrompt, userPrompt, maxTokens }) {
+  const headers = {
+    'content-type': 'application/json',
+    'anthropic-version': '2023-06-01',
+  };
+  if (apiKey) {
+    headers['x-api-key'] = apiKey;
+    headers['anthropic-dangerous-direct-browser-access'] = 'true';
+  }
+  const maxTokensFinal = apiKey ? Math.min(8192, Math.max(512, maxTokens)) : 1000;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: maxTokensFinal,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+    }),
+  });
+
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error('Erro ' + res.status + ': ' + txt.slice(0, 220));
+  }
+  const data = await res.json();
+  const bloco = (data.content || []).find((b) => b.type === 'text');
+  return bloco ? bloco.text : '';
+}
+
+async function gerarCapitulo({ apiKey, systemPrompt, userPrompt, maxPalavras }) {
+  const maxTokens = Math.ceil(maxPalavras * 2.2);
+  return chamarIA({ apiKey, systemPrompt, userPrompt, maxTokens });
+}
+
+function montarSecaoMundoExpandido(mundoAvancado) {
+  if (!mundoAvancado) return '';
+  const partes = [];
+  CAMPOS_IMPERIO.forEach((campo) => {
+    const valor = (mundoAvancado[campo.chave] || '').trim();
+    if (!valor) return;
+    if (campo.tipo === 'lista') {
+      const itens = valor.split('\n').map((l) => l.trim()).filter(Boolean);
+      if (itens.length) partes.push(campo.label.toUpperCase() + ': ' + itens.join('; '));
+    } else {
+      partes.push(campo.label.toUpperCase() + ': ' + valor);
+    }
+  });
+  if (!partes.length) return '';
+  return 'MUNDO EXPANDIDO (use estes elementos para enriquecer a história, com timing e sutileza - não despeje tudo de uma vez):\n' + partes.join('\n');
+}
+
+function montarPromptCapitulo(story, numero) {
+  const anterior = story.capitulos[story.capitulos.length - 1];
+  const contexto = anterior
+    ? 'CONTEXTO DO CAPÍTULO ANTERIOR (mantenha continuidade total - personagens, tom, eventos):\n' + anterior.conteudo.slice(-2500)
+    : 'Este é o capítulo de abertura da história. Estabeleça o mundo, o tom e os protagonistas de forma envolvente.';
+
+  const linhas = [
+    'HISTÓRIA: ' + story.titulo,
+    'GÊNERO: ' + story.genero,
+    'IDEIA PRINCIPAL / SINOPSE: ' + story.sinopse,
+    'PROTAGONISTAS: ' + story.protagonistas,
+    'PONTO DE VISTA: ' + story.pov,
+    'TOM DA NARRATIVA: ' + story.tom,
+    'OBJETIVO FINAL DA HISTÓRIA: ' + story.objetivoFinal,
+  ];
+  const secaoMundo = montarSecaoMundoExpandido(story.mundoAvancado);
+  if (secaoMundo) linhas.push(secaoMundo);
+  if (story.vozDoAutor && story.vozDoAutor.trim()) {
+    linhas.push('INSTRUÇÕES ABSOLUTAS DO AUTOR - VOZ DO AUTOR (seguir rigorosamente, têm prioridade sobre tudo): ' + story.vozDoAutor.trim());
+  }
+  linhas.push(contexto);
+  linhas.push('Escreva o CAPÍTULO ' + numero + ' de ' + story.capitulosTotais + ' desta história, com aproximadamente ' + story.palavrasPorCapitulo + ' palavras.');
+  if (numero === story.capitulosTotais) {
+    linhas.push('Este é o capítulo FINAL da saga. Conduza a história ao objetivo final de forma satisfatória e memorável.');
+  }
+  linhas.push('Responda EXATAMENTE neste formato, sem nenhum texto, comentário ou markdown adicional antes ou depois:');
+  linhas.push('TÍTULO: [título do capítulo, sem a palavra "Capítulo"]');
+  linhas.push('---');
+  linhas.push('[conteúdo integral do capítulo]');
+  return linhas.join('\n');
+}
+
+function interpretarRespostaCapitulo(texto, numero) {
+  const partes = texto.split('---');
+  if (partes.length >= 2) {
+    const titulo = partes[0].replace(/TÍTULO:/i, '').trim();
+    const conteudo = partes.slice(1).join('---').trim();
+    return { titulo: titulo || ('Capítulo ' + numero), conteudo };
+  }
+  return { titulo: 'Capítulo ' + numero, conteudo: texto.trim() };
+}
+
+/* =========================================================
+   MEMÓRIA VIVA - extração automática de entidades por capítulo
+========================================================= */
+
+function montarPromptExtracaoMemoria(story, capitulo) {
+  const memoriaResumo = JSON.stringify(story.memoria || MEMORIA_VAZIA);
+  const linhas = [
+    'MEMÓRIA ATUAL DA HISTÓRIA (JSON):',
+    memoriaResumo,
+    '',
+    'NOVO CAPÍTULO (Nº ' + capitulo.numero + ' - "' + capitulo.titulo + '"):',
+    capitulo.conteudo,
+    '',
+    'Analise o novo capítulo e retorne APENAS um objeto JSON válido, sem markdown, sem texto antes ou depois, com as chaves: personagens, locais, faccoes, objetos, eventos.',
+    'Cada chave deve conter um array com APENAS as entidades NOVAS ou ALTERADAS neste capítulo (não repita entidades sem mudanças).',
+    'Formato de cada item:',
+    '- personagens: {"nome","descricao","papel","status","tracos","relacionamentos"}',
+    '- locais: {"nome","descricao","tipo"}',
+    '- faccoes: {"nome","descricao"}',
+    '- objetos: {"nome","descricao","portador"}',
+    '- eventos: {"titulo","descricao"}',
+    'Todos os campos de texto devem ser strings simples (nunca objetos ou arrays aninhados).',
+    'Se nada novo ou alterado em uma categoria, retorne array vazio para ela.',
+  ];
+  return linhas.join('\n');
+}
+
+function extrairJson(texto) {
+  try {
+    const limpo = texto.replace(/```json/gi, '').replace(/```/g, '').trim();
+    return JSON.parse(limpo);
+  } catch (e) {
+    return null;
+  }
+}
+
+function mesclarMemoria(memoriaAtual, delta, numeroCapitulo) {
+  const base = memoriaAtual || MEMORIA_VAZIA;
+  const resultado = {
+    personagens: [...(base.personagens || [])],
+    locais: [...(base.locais || [])],
+    faccoes: [...(base.faccoes || [])],
+    objetos: [...(base.objetos || [])],
+    eventos: [...(base.eventos || [])],
+  };
+  MEMORIA_CATEGORIAS.forEach((cat) => {
+    const novos = (delta && Array.isArray(delta[cat.chave])) ? delta[cat.chave] : [];
+    novos.forEach((item) => {
+      if (!item) return;
+      const chaveNome = paraTexto(item.nome || item.titulo).trim().toLowerCase();
+      if (!chaveNome) return;
+      const idx = resultado[cat.chave].findIndex(
+        (e) => paraTexto(e.nome || e.titulo).trim().toLowerCase() === chaveNome
+      );
+      const entrada = { ...item, atualizadoNoCapitulo: numeroCapitulo };
+      if (idx >= 0) resultado[cat.chave][idx] = { ...resultado[cat.chave][idx], ...entrada };
+      else resultado[cat.chave].push(entrada);
+    });
+  });
+  return resultado;
+}
+
+async function extrairMemoria({ apiKey, story, capitulo }) {
+  const systemPrompt = 'Você é um sistema de extração de memória narrativa. Responda SOMENTE com JSON válido, sem markdown, sem comentários, sem texto adicional antes ou depois.';
+  const userPrompt = montarPromptExtracaoMemoria(story, capitulo);
+  const resposta = await chamarIA({ apiKey, systemPrompt, userPrompt, maxTokens: 2048 });
+  const json = extrairJson(resposta);
+  if (!json) return story.memoria || MEMORIA_VAZIA;
+  return mesclarMemoria(story.memoria, json, capitulo.numero);
+}
+
+/* =========================================================
+   CONSISTÊNCIA NARRATIVA
+========================================================= */
+
+function montarPromptConsistencia(story) {
+  const memoriaResumo = JSON.stringify(story.memoria || MEMORIA_VAZIA);
+  const ultimos = story.capitulos
+    .slice(-2)
+    .map((c) => 'CAPÍTULO ' + c.numero + ' - ' + c.titulo + '\n' + c.conteudo)
+    .join('\n\n');
+  const linhas = [
+    'MEMÓRIA REGISTRADA DA HISTÓRIA (JSON):',
+    memoriaResumo,
+    '',
+    'CAPÍTULOS RECENTES:',
+    ultimos,
+    '',
+    'Revise os capítulos recentes em busca de: contradições, furos de roteiro, mudanças não explicadas de aparência/idade/personalidade, erros cronológicos ou de continuidade em relação à memória registrada.',
+    'Responda em português, em formato de lista curta com marcadores "-". Se nada for encontrado, responda apenas: "Nenhuma inconsistência detectada."',
+  ];
+  return linhas.join('\n');
+}
+
+async function verificarConsistencia({ apiKey, story }) {
+  const systemPrompt = NUCLEO_ESCRITORA_SUPREMA + '\n\nAlém de escrever, você atua agora como revisora de continuidade meticulosa, comparando os capítulos recentes com a memória registrada da história.';
+  const userPrompt = montarPromptConsistencia(story);
+  const resposta = await chamarIA({ apiKey, systemPrompt, userPrompt, maxTokens: 1024 });
+  return resposta.trim();
+}
+
+/* =========================================================
+   MENTOR LITERÁRIO
+========================================================= */
+
+async function analisarComMentor({ apiKey, story, capitulo }) {
+  const systemPrompt = 'Você é uma mentora literária renomada, especialista em estrutura narrativa, ritmo, prosa e construção de mundo. Responda SOMENTE com JSON válido, sem markdown, sem texto adicional.';
+  const userPrompt = [
+    'HISTÓRIA: ' + story.titulo,
+    'GÊNERO: ' + story.genero,
+    'CAPÍTULO ANALISADO (Nº ' + capitulo.numero + ' - ' + capitulo.titulo + '):',
+    capitulo.conteudo,
+    '',
+    'Avalie este capítulo e retorne APENAS um JSON com esta estrutura exata:',
+    '{"ritmo":0,"emocao":0,"dialogos":0,"tensao":0,"construcaoMundo":0,"consistencia":0,"qualidadeGeral":0,"pontosFortes":"","sugestoes":""}',
+    'Todas as notas de 0 a 10 (números). Os textos "pontosFortes" e "sugestoes" em português, concisos (2-4 frases cada).',
+  ].join('\n');
+  const resposta = await chamarIA({ apiKey, systemPrompt, userPrompt, maxTokens: 1024 });
+  return extrairJson(resposta);
+}
+
+/* =========================================================
+   PLANEJADOR DE SAGA
+========================================================= */
+
+async function gerarPlanoSaga({ apiKey, story }) {
+  const systemPrompt = 'Você é uma planejadora narrativa especialista em estrutura de sagas longas. Responda SOMENTE com um array JSON válido, sem markdown, sem texto adicional.';
+  const userPrompt = [
+    'HISTÓRIA: ' + story.titulo,
+    'GÊNERO: ' + story.genero,
+    'SINOPSE: ' + story.sinopse,
+    'OBJETIVO FINAL: ' + story.objetivoFinal,
+    'TOTAL DE CAPÍTULOS DA SAGA: ' + story.capitulosTotais,
+    '',
+    'Divida esta saga em arcos narrativos cobrindo do capítulo 1 ao ' + story.capitulosTotais + ', sem sobreposição e em ordem.',
+    'Use entre 2 e 8 arcos, proporcional ao tamanho da saga.',
+    'Retorne APENAS um array JSON, cada item com a estrutura exata:',
+    '{"titulo":"","descricao":"","capituloInicio":1,"capituloFim":1}',
+  ].join('\n');
+  const resposta = await chamarIA({ apiKey, systemPrompt, userPrompt, maxTokens: 1536 });
+  const json = extrairJson(resposta);
+  return Array.isArray(json) ? json : [];
+}
+
+/* =========================================================
+   MENTE SUPREMA
+========================================================= */
+
+function montarPromptMenteSuprema(acaoId, story, extra) {
+  const memoriaResumo = JSON.stringify(story.memoria || MEMORIA_VAZIA);
+  const ultimoCap = story.capitulos[story.capitulos.length - 1];
+  const base = [
+    'HISTÓRIA: ' + story.titulo,
+    'GÊNERO: ' + story.genero,
+    'SINOPSE: ' + story.sinopse,
+    'MEMÓRIA REGISTRADA (JSON): ' + memoriaResumo,
+  ];
+  if (acaoId === 'planejar') {
+    base.push('PROGRESSO ATUAL: capítulo ' + story.capitulos.length + ' de ' + story.capitulosTotais);
+    base.push('OBJETIVO FINAL: ' + story.objetivoFinal);
+    base.push('Sugira, em português, um plano resumido para os próximos 3 a 5 capítulos. Responda em lista com marcadores "-", uma linha por capítulo sugerido.');
+  } else if (acaoId === 'personagem') {
+    base.push('Crie um novo personagem secundário coerente com este universo e memória registrada, que poderia ser introduzido em capítulos futuros.');
+    base.push('Descreva, em um parágrafo conciso: nome, papel na história, aparência, personalidade e motivação.');
+  } else if (acaoId === 'plottwist') {
+    if (ultimoCap) base.push('ÚLTIMO CAPÍTULO REGISTRADO (Nº ' + ultimoCap.numero + '): ' + ultimoCap.conteudo.slice(-1500));
+    base.push('Sugira UMA reviravolta (plot twist) coerente com a história e a memória registrada, que poderia ser usada em capítulos futuros. Explique a ideia e o impacto narrativo em até 4 frases.');
+  } else if (acaoId === 'dialogos') {
+    if (ultimoCap) {
+      base.push('ÚLTIMO CAPÍTULO (Nº ' + ultimoCap.numero + ' - ' + ultimoCap.titulo + '):');
+      base.push(ultimoCap.conteudo);
+    } else {
+      base.push('Esta história ainda não possui capítulos gerados.');
+    }
+    base.push('Aponte 2-3 trechos de diálogo deste capítulo que poderiam ficar mais afiados, naturais ou reveladores de personalidade, e sugira versões melhoradas. Responda em lista com marcadores "-".');
+  } else if (acaoId === 'livre') {
+    base.push('PERGUNTA / PEDIDO DO AUTOR: ' + extra);
+  }
+  return base.join('\n');
+}
+
+async function consultarMenteSuprema({ apiKey, story, acaoId, extra }) {
+  const systemPrompt = NUCLEO_ESCRITORA_SUPREMA + '\n\nVocê também atua como diretora criativa estratégica desta saga, oferecendo conselhos objetivos e acionáveis ao autor.';
+  const userPrompt = montarPromptMenteSuprema(acaoId, story, extra);
+  const resposta = await chamarIA({ apiKey, systemPrompt, userPrompt, maxTokens: 1280 });
+  return resposta.trim();
+}
+
+function montarPromptCorrecao(story, capitulo, instrucao) {
+  return [
+    'HISTÓRIA: ' + story.titulo,
+    'MEMÓRIA REGISTRADA (JSON): ' + JSON.stringify(story.memoria || MEMORIA_VAZIA),
+    '',
+    'CAPÍTULO ORIGINAL (Nº ' + capitulo.numero + ' - ' + capitulo.titulo + '):',
+    capitulo.conteudo,
+    '',
+    'INSTRUÇÃO DE CORREÇÃO: ' + instrucao,
+    '',
+    'Reescreva o capítulo aplicando a instrução, preservando o máximo possível do que já funciona e mantendo total consistência com a memória registrada.',
+    'Responda EXATAMENTE neste formato, sem texto adicional:',
+    'TÍTULO: [título do capítulo]',
+    '---',
+    '[conteúdo integral revisado]',
+  ].join('\n');
+}
+
+async function corrigirCapitulo({ apiKey, story, capitulo, instrucao }) {
+  const systemPrompt = NUCLEO_ESCRITORA_SUPREMA + '\n\nVocê também atua como editora de texto, revisando e corrigindo capítulos sem perder a essência original.';
+  const userPrompt = montarPromptCorrecao(story, capitulo, instrucao);
+  const maxTokens = Math.ceil(contarPalavras(capitulo.conteudo) * 2.5);
+  const resposta = await chamarIA({ apiKey, systemPrompt, userPrompt, maxTokens });
+  return interpretarRespostaCapitulo(resposta, capitulo.numero);
+}
+
+/* =========================================================
+   COMPONENTES VISUAIS PEQUENOS
+========================================================= */
+
+function SeloImperial({ size = 40 }) {
+  return (
+    <div
+      className="isf-seal relative flex items-center justify-center rounded-full shrink-0"
+      style={{
+        width: size, height: size,
+        background: 'radial-gradient(circle, rgba(212,175,55,0.20), transparent 70%)',
+        border: '1px solid rgba(212,175,55,0.45)',
+      }}
+    >
+      <Crown size={size * 0.5} color="#d4af37" strokeWidth={1.5} />
+    </div>
+  );
+}
+
+function Barra({ progresso }) {
+  const p = Math.max(0, Math.min(100, progresso));
+  return (
+    <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+      <div
+        className="h-full rounded-full"
+        style={{
+          width: p + '%',
+          background: 'linear-gradient(90deg, #8b6914, #d4af37, #f4e4a6)',
+          transition: 'width 0.4s ease',
+        }}
+      />
+    </div>
+  );
+}
+
+function Etiqueta({ children, color }) {
+  return (
+    <span
+      className="text-[11px] px-2 py-0.5 rounded-full isf-display tracking-wider uppercase"
+      style={{
+        color: color || '#d4af37',
+        border: '1px solid ' + (color || '#d4af37') + '40',
+        background: (color || '#d4af37') + '14',
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+function Sidebar({ view, setView, sidebarOpen, setSidebarOpen, apiConfigurada }) {
+  return (
+    <>
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/70 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      <aside
+        className={
+          'fixed md:static z-50 top-0 left-0 h-full w-[260px] flex flex-col isf-glass border-r ' +
+          'transition-transform duration-300 ' +
+          (sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0')
+        }
+        style={{ borderColor: 'rgba(212,175,55,0.15)' }}
+      >
+        <div className="flex items-center gap-3 px-5 py-6 border-b" style={{ borderColor: 'rgba(212,175,55,0.12)' }}>
+          <SeloImperial size={42} />
+          <div>
+            <div className="isf-display text-sm tracking-[0.18em] text-[#f4e4a6]">IMPERIUM</div>
+            <div className="isf-display text-[10px] tracking-[0.3em] text-[#9a958a]">STORYFORGE</div>
+          </div>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-1">
+          {SIDEBAR_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActiveView = view === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => { setView(item.id); setSidebarOpen(false); }}
+                className={
+                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left ' +
+                  (isActiveView ? 'isf-glow' : 'hover:bg-white/[0.03]')
+                }
+                style={{
+                  color: isActiveView ? '#f4e4a6' : item.active ? '#d8d3c6' : '#7a766c',
+                  background: isActiveView ? 'rgba(212,175,55,0.08)' : 'transparent',
+                  border: isActiveView ? '1px solid rgba(212,175,55,0.25)' : '1px solid transparent',
+                }}
+              >
+                <Icon size={17} strokeWidth={1.6} />
+                <span className="flex-1">{item.label}</span>
+                {!item.active && <Lock size={13} strokeWidth={1.6} />}
+                {item.id === 'config' && (
+                  <span
+                    className="w-2 h-2 rounded-full"
+                    style={{ background: apiConfigurada ? '#7fd49a' : '#c0584a' }}
+                    title={apiConfigurada ? 'Chave API configurada' : 'Chave API ausente'}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="px-5 py-4 border-t text-[10px] text-[#6b6760] isf-display tracking-widest" style={{ borderColor: 'rgba(212,175,55,0.12)' }}>
+          PLATAFORMA COMPLETA
+        </div>
+      </aside>
+    </>
+  );
+}
+
+/* =========================================================
+   TOPBAR
+========================================================= */
+
+function Topbar({ setSidebarOpen, view, activeStory, apiConfigurada }) {
+  const titulos = {
+    painel: 'Painel Imperial',
+    gaveta: activeStory ? activeStory.titulo : 'Gaveta Literária',
+    forjar: 'Forjar História',
+    config: 'Configurações',
+  };
+  const titulo = titulos[view] || (SIDEBAR_ITEMS.find((i) => i.id === view) || {}).label || '';
+
+  return (
+    <header
+      className="sticky top-0 z-30 flex items-center justify-between gap-3 px-4 md:px-6 py-3 isf-glass border-b"
+      style={{ borderColor: 'rgba(212,175,55,0.12)' }}
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        <button onClick={() => setSidebarOpen(true)} className="md:hidden text-[#d4af37]">
+          <Menu size={20} />
+        </button>
+        <h1 className="isf-display text-sm md:text-base tracking-wider text-[#f0ead8] truncate">{titulo}</h1>
+      </div>
+      <div className="flex items-center gap-2 md:gap-4 shrink-0">
+        <div className="hidden sm:flex items-center gap-1.5 text-xs text-[#9a958a]">
+          <Save size={14} strokeWidth={1.6} />
+          <span>Salvo automaticamente</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs">
+          <span className="w-2 h-2 rounded-full" style={{ background: apiConfigurada ? '#7fd49a' : '#c0584a' }} />
+          <span style={{ color: apiConfigurada ? '#7fd49a' : '#c0584a' }}>
+            {apiConfigurada ? 'IA Pronta' : 'IA Inativa'}
+          </span>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+/* =========================================================
+   PAINEL IMPERIAL (DASHBOARD)
+========================================================= */
+
+function PainelImperial({ stats, stories, setView, setActiveStoryId }) {
+  const recentes = useMemo(
+    () => [...stories].sort((a, b) => new Date(b.atualizadoEm) - new Date(a.atualizadoEm)).slice(0, 3),
+    [stories]
+  );
+
+  const cards = [
+    { label: 'Histórias Ativas', valor: stats.historiasAtivas },
+    { label: 'Capítulos Gerados', valor: stats.capitulosGerados },
+    { label: 'Palavras Escritas', valor: stats.palavrasEscritas.toLocaleString('pt-BR') },
+    { label: 'Progresso Médio', valor: stats.progressoMedio + '%' },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div className="isf-glass isf-glow rounded-2xl p-6 md:p-8 flex items-center gap-5">
+        <SeloImperial size={64} />
+        <div>
+          <div className="isf-display text-lg md:text-2xl text-[#f4e4a6] tracking-wide">Bem-vindo ao seu Império Literário</div>
+          <div className="text-sm text-[#9a958a] mt-1">Cada história forjada aqui é registrada, versionada e mantida com consistência absoluta.</div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {cards.map((c) => (
+          <div key={c.label} className="isf-glass rounded-xl p-4">
+            <div className="text-2xl md:text-3xl isf-display text-[#f4e4a6]">{c.valor}</div>
+            <div className="text-xs text-[#9a958a] mt-1">{c.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div>
+        <div className="isf-display text-sm tracking-widest text-[#d4af37] mb-3">HISTÓRIAS RECENTES</div>
+        {recentes.length === 0 ? (
+          <div className="isf-glass rounded-xl p-6 text-sm text-[#9a958a]">
+            Sua gaveta está vazia. Forje sua primeira história para começar.
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-4">
+            {recentes.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => { setActiveStoryId(s.id); setView('gaveta'); }}
+                className="isf-glass rounded-xl p-4 text-left hover:isf-glow transition-shadow"
+              >
+                <div className="isf-display text-sm text-[#f0ead8] truncate">{s.titulo}</div>
+                <div className="text-xs text-[#9a958a] mt-1">{s.capitulos.length} / {s.capitulosTotais} capítulos</div>
+                <div className="mt-3"><Barra progresso={(s.capitulos.length / s.capitulosTotais) * 100} /></div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="isf-display text-sm tracking-widest text-[#d4af37] mb-3">MÓDULOS DA PLATAFORMA</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {SIDEBAR_ITEMS.filter((i) => i.id !== 'config').map((item) => {
+            const Icon = item.icon;
+            return (
+              <div key={item.id} className="isf-glass rounded-xl p-3 flex flex-col gap-2">
+                <Icon size={18} strokeWidth={1.6} color={item.active ? '#d4af37' : '#6b6760'} />
+                <div className="text-xs text-[#d8d3c6]">{item.label}</div>
+                <Etiqueta color={item.active ? '#7fd49a' : '#9a958a'}>
+                  {item.active ? 'Ativo' : 'Em Breve'}
+                </Etiqueta>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   GAVETA LITERÁRIA
+========================================================= */
+
+function GavetaLiteraria({ stories, setActiveStoryId, setView, excluirHistoria }) {
+  const [confirmarExclusao, setConfirmarExclusao] = useState(null);
+
+  if (stories.length === 0) {
+    return (
+      <div className="isf-glass rounded-2xl p-10 text-center space-y-4">
+        <SeloImperial size={56} />
+        <div className="isf-display text-lg text-[#f0ead8]">Sua gaveta está vazia</div>
+        <div className="text-sm text-[#9a958a] max-w-md mx-auto">
+          Toda grande saga começa com uma faísca. Forje sua primeira história e ela viverá aqui para sempre.
+        </div>
+        <button
+          onClick={() => setView('forjar')}
+          className="isf-display text-xs tracking-widest uppercase px-5 py-2.5 rounded-lg isf-glow"
+          style={{ background: 'rgba(212,175,55,0.12)', border: '1px solid rgba(212,175,55,0.4)', color: '#f4e4a6' }}
+        >
+          Forjar Primeira História
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {stories.map((s) => {
+        const progresso = (s.capitulos.length / s.capitulosTotais) * 100;
+        const status = STATUS_INFO[s.status] || STATUS_INFO['em-andamento'];
+        const palavras = s.capitulos.reduce((acc, c) => acc + contarPalavras(c.conteudo), 0);
+        return (
+          <div key={s.id} className="isf-glass rounded-2xl overflow-hidden flex flex-col">
+            <div
+              className="h-28 flex items-end p-4 relative"
+              style={{ background: CAPA_GRADIENTES[s.genero] || CAPA_DEFAULT }}
+            >
+              <div className="absolute top-3 right-3"><Etiqueta color={status.color}>{status.label}</Etiqueta></div>
+              <div className="isf-display text-[#f4e4a6] text-base leading-tight drop-shadow">{s.titulo}</div>
+            </div>
+            <div className="p-4 flex-1 flex flex-col gap-3">
+              <div className="flex items-center gap-2 text-xs text-[#9a958a]">
+                <Etiqueta>{s.genero}</Etiqueta>
+                <span>{formatarData(s.atualizadoEm)}</span>
+              </div>
+              <p className="text-sm text-[#c9c4b8] leading-relaxed line-clamp-3 isf-serif">{s.sinopse}</p>
+              <div className="mt-auto space-y-2">
+                <div className="flex justify-between text-xs text-[#9a958a]">
+                  <span>{s.capitulos.length} / {s.capitulosTotais} capítulos</span>
+                  <span>{palavras.toLocaleString('pt-BR')} palavras</span>
+                </div>
+                <Barra progresso={progresso} />
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={() => { setActiveStoryId(s.id); setView('gaveta'); }}
+                    className="flex-1 isf-display text-[11px] tracking-widest uppercase py-2 rounded-lg"
+                    style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', color: '#f4e4a6' }}
+                  >
+                    Abrir
+                  </button>
+                  {confirmarExclusao === s.id ? (
+                    <>
+                      <button onClick={() => excluirHistoria(s.id)} className="px-3 rounded-lg text-xs" style={{ background: 'rgba(192,88,74,0.18)', border: '1px solid rgba(192,88,74,0.5)', color: '#e0a094' }}>
+                        Confirmar
+                      </button>
+                      <button onClick={() => setConfirmarExclusao(null)} className="px-3 rounded-lg text-xs text-[#9a958a]" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
+                        <X size={14} />
+                      </button>
+                    </>
+                  ) : (
+                    <button onClick={() => setConfirmarExclusao(s.id)} className="px-3 rounded-lg" style={{ border: '1px solid rgba(255,255,255,0.08)', color: '#9a958a' }}>
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* =========================================================
+   LEITOR DE HISTÓRIA
+========================================================= */
+
+function LeitorHistoria({ story, setActiveStoryId, atualizarHistoria, apiKey }) {
+  const [gerando, setGerando] = useState(false);
+  const [erro, setErro] = useState('');
+  const [vozDoAutor, setVozDoAutor] = useState(story.vozDoAutor || '');
+  const [capituloAberto, setCapituloAberto] = useState(story.capitulos.length ? story.capitulos.length - 1 : null);
+  const [verificando, setVerificando] = useState(false);
+  const [consistencia, setConsistencia] = useState(null);
+  const [mundoAvancado, setMundoAvancado] = useState(story.mundoAvancado || camposImperioVazios());
+  const [mundoAberto, setMundoAberto] = useState(false);
+
+  const proximo = story.capitulos.length + 1;
+  const concluida = story.capitulos.length >= story.capitulosTotais;
+  const palavras = story.capitulos.reduce((acc, c) => acc + contarPalavras(c.conteudo), 0);
+  const memoria = story.memoria || MEMORIA_VAZIA;
+  const totalMemoria = MEMORIA_CATEGORIAS.reduce((acc, cat) => acc + (memoria[cat.chave] || []).length, 0);
+
+  async function handleGerar() {
+    if (!apiKey) { setErro('Configure sua chave API em Configurações antes de gerar capítulos.'); return; }
+    setErro('');
+    setConsistencia(null);
+    setGerando(true);
+    try {
+      const userPrompt = montarPromptCapitulo({ ...story, vozDoAutor, mundoAvancado }, proximo);
+      const resposta = await gerarCapitulo({
+        apiKey,
+        systemPrompt: NUCLEO_ESCRITORA_SUPREMA,
+        userPrompt,
+        maxPalavras: story.palavrasPorCapitulo,
+      });
+      const { titulo, conteudo } = interpretarRespostaCapitulo(resposta, proximo);
+      const novoCapitulo = { numero: proximo, titulo, conteudo, geradoEm: new Date().toISOString() };
+      const novosCapitulos = [...story.capitulos, novoCapitulo];
+
+      // Memória Viva: extração best-effort - não bloqueia o capítulo caso falhe
+      let novaMemoria = story.memoria || MEMORIA_VAZIA;
+      try {
+        novaMemoria = await extrairMemoria({ apiKey, story: { ...story, capitulos: novosCapitulos }, capitulo: novoCapitulo });
+      } catch (memErr) { /* memória é best-effort */ }
+
+      atualizarHistoria(story.id, {
+        capitulos: novosCapitulos,
+        memoria: novaMemoria,
+        vozDoAutor,
+        mundoAvancado,
+        status: novosCapitulos.length >= story.capitulosTotais ? 'concluida' : story.status,
+        atualizadoEm: new Date().toISOString(),
+      });
+      setCapituloAberto(novosCapitulos.length - 1);
+    } catch (e) {
+      setErro(e.message || 'Falha ao gerar capítulo.');
+    } finally {
+      setGerando(false);
+    }
+  }
+
+  async function handleVerificarConsistencia() {
+    if (!apiKey) { setErro('Configure sua chave API em Configurações para usar a verificação de consistência.'); return; }
+    setErro('');
+    setVerificando(true);
+    try {
+      const resultado = await verificarConsistencia({ apiKey, story });
+      setConsistencia(resultado);
+    } catch (e) {
+      setErro(e.message || 'Falha ao verificar consistência.');
+    } finally {
+      setVerificando(false);
+    }
+  }
+
+  function alternarPausa() {
+    atualizarHistoria(story.id, {
+      status: story.status === 'pausada' ? 'em-andamento' : 'pausada',
+      atualizadoEm: new Date().toISOString(),
+    });
+  }
+
+  return (
+    <div className="space-y-5">
+      <button onClick={() => setActiveStoryId(null)} className="flex items-center gap-2 text-sm text-[#9a958a] hover:text-[#d4af37]">
+        <ArrowLeft size={15} /> Voltar à Gaveta
+      </button>
+
+      <div className="isf-glass rounded-2xl p-5 md:p-6 space-y-4" style={{ background: CAPA_GRADIENTES[story.genero] || CAPA_DEFAULT }}>
+        <div className="flex flex-wrap items-center gap-2">
+          <Etiqueta>{story.genero}</Etiqueta>
+          <Etiqueta>{story.pov}</Etiqueta>
+          <Etiqueta>{story.tom}</Etiqueta>
+          <Etiqueta color={(STATUS_INFO[story.status] || STATUS_INFO['em-andamento']).color}>
+            {(STATUS_INFO[story.status] || STATUS_INFO['em-andamento']).label}
+          </Etiqueta>
+        </div>
+        <div className="isf-display text-xl md:text-2xl text-[#f4e4a6]">{story.titulo}</div>
+        <p className="text-sm text-[#e8e3d6] isf-serif leading-relaxed max-w-2xl">{story.sinopse}</p>
+        <div className="flex flex-wrap gap-6 text-xs text-[#e0dccf]">
+          <div><span className="text-[#9a958a]">Capítulos: </span>{story.capitulos.length} / {story.capitulosTotais}</div>
+          <div><span className="text-[#9a958a]">Palavras: </span>{palavras.toLocaleString('pt-BR')}</div>
+          <div><span className="text-[#9a958a]">Criada em: </span>{formatarData(story.criadoEm)}</div>
+        </div>
+        <Barra progresso={(story.capitulos.length / story.capitulosTotais) * 100} />
+      </div>
+
+      <div className="isf-glass rounded-2xl p-5 space-y-3">
+        <div className="isf-display text-xs tracking-widest text-[#d4af37]">VOZ DO AUTOR (instruções absolutas para a IA)</div>
+        <textarea
+          value={vozDoAutor}
+          onChange={(e) => setVozDoAutor(e.target.value)}
+          onBlur={() => atualizarHistoria(story.id, { vozDoAutor, atualizadoEm: new Date().toISOString() })}
+          placeholder="Ex: nunca mate o personagem X antes do capítulo 10. Mantenha diálogos curtos e secos no estilo noir."
+          className="w-full bg-transparent border rounded-lg p-3 text-sm text-[#e8e3d6] placeholder:text-[#6b6760] resize-none isf-serif"
+          style={{ borderColor: 'rgba(212,175,55,0.2)', minHeight: '70px' }}
+        />
+      </div>
+
+      <div className="isf-glass rounded-2xl p-5 space-y-3">
+        <button onClick={() => setMundoAberto((v) => !v)} className="w-full flex items-center justify-between text-left">
+          <div className="isf-display text-xs tracking-widest text-[#d4af37] flex items-center gap-2">
+            <Crown size={14} /> MUNDO EXPANDIDO (Modo Avançado)
+          </div>
+          <ChevronRight size={15} className={'transition-transform ' + (mundoAberto ? 'rotate-90' : '')} />
+        </button>
+        {mundoAberto && (
+          <div className="space-y-3 pt-1">
+            {CAMPOS_IMPERIO.map((campo) => {
+              const Icon = campo.icon;
+              return (
+                <div key={campo.chave} className="space-y-1">
+                  <div className="text-[11px] isf-display tracking-widest text-[#b8a468] flex items-center gap-1.5">
+                    <Icon size={12} /> {campo.label.toUpperCase()}
+                  </div>
+                  <textarea
+                    value={mundoAvancado[campo.chave] || ''}
+                    onChange={(e) => setMundoAvancado((m) => ({ ...m, [campo.chave]: e.target.value }))}
+                    onBlur={() => atualizarHistoria(story.id, { mundoAvancado, atualizadoEm: new Date().toISOString() })}
+                    placeholder={campo.placeholder}
+                    className="w-full bg-transparent border rounded-lg p-2.5 text-sm text-[#e8e3d6] placeholder:text-[#6b6760] resize-none isf-serif"
+                    style={{ borderColor: 'rgba(212,175,55,0.15)', minHeight: '50px' }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="isf-glass rounded-2xl p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="isf-display text-xs tracking-widest text-[#d4af37]">MEMÓRIA VIVA</div>
+          {totalMemoria > 0 && <Etiqueta color="#7fd49a">{totalMemoria} registros</Etiqueta>}
+        </div>
+        {totalMemoria === 0 ? (
+          <p className="text-sm text-[#9a958a]">
+            A memória desta história ainda está vazia. Ela é preenchida automaticamente após cada capítulo forjado.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            {MEMORIA_CATEGORIAS.map((cat) => {
+              const Icon = cat.icon;
+              return (
+                <div key={cat.chave} className="rounded-lg p-3 text-center" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <Icon size={16} strokeWidth={1.6} color="#d4af37" className="mx-auto mb-1" />
+                  <div className="isf-display text-base text-[#f0ead8]">{(memoria[cat.chave] || []).length}</div>
+                  <div className="text-[10px] text-[#9a958a]">{cat.label}</div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {erro && (
+        <div className="isf-glass rounded-xl p-4 flex items-start gap-3 text-sm" style={{ borderColor: 'rgba(192,88,74,0.4)', color: '#e0a094' }}>
+          <AlertCircle size={16} className="shrink-0 mt-0.5" />
+          <span>{erro}</span>
+        </div>
+      )}
+
+      {consistencia && (
+        <div className="isf-glass rounded-xl p-5 space-y-2" style={{ borderColor: 'rgba(212,175,55,0.3)' }}>
+          <div className="isf-display text-xs tracking-widest text-[#d4af37] flex items-center gap-2">
+            <ShieldCheck size={14} /> RELATÓRIO DE CONSISTÊNCIA
+          </div>
+          <div className="text-sm text-[#d8d3c6] leading-relaxed whitespace-pre-wrap isf-serif">{consistencia}</div>
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-3">
+        {!concluida && (
+          <button
+            onClick={handleGerar}
+            disabled={gerando || story.status === 'pausada'}
+            className="isf-display text-xs tracking-widest uppercase px-5 py-3 rounded-lg isf-glow flex items-center gap-2 disabled:opacity-50"
+            style={{ background: 'rgba(212,175,55,0.12)', border: '1px solid rgba(212,175,55,0.4)', color: '#f4e4a6' }}
+          >
+            {gerando ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
+            {gerando ? 'Forjando capítulo...' : 'Forjar Capítulo ' + proximo}
+          </button>
+        )}
+        {story.capitulos.length > 0 && (
+          <button
+            onClick={handleVerificarConsistencia}
+            disabled={verificando}
+            className="text-xs tracking-widest uppercase px-5 py-3 rounded-lg flex items-center gap-2 disabled:opacity-50"
+            style={{ border: '1px solid rgba(212,175,55,0.25)', color: '#d4af37' }}
+          >
+            {verificando ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+            Verificar Consistência
+          </button>
+        )}
+        <button
+          onClick={alternarPausa}
+          className="text-xs tracking-widest uppercase px-5 py-3 rounded-lg flex items-center gap-2 text-[#9a958a]"
+          style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+        >
+          {story.status === 'pausada' ? <Play size={14} /> : <Pause size={14} />}
+          {story.status === 'pausada' ? 'Retomar' : 'Pausar'}
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        <div className="isf-display text-xs tracking-widest text-[#d4af37]">CAPÍTULOS</div>
+        {story.capitulos.length === 0 && (
+          <div className="isf-glass rounded-xl p-5 text-sm text-[#9a958a]">Nenhum capítulo forjado ainda.</div>
+        )}
+        {story.capitulos.map((cap, idx) => (
+          <div key={cap.numero} className="isf-glass rounded-xl overflow-hidden">
+            <button
+              onClick={() => setCapituloAberto(capituloAberto === idx ? null : idx)}
+              className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="isf-display text-[#d4af37] text-sm shrink-0">{String(cap.numero).padStart(2, '0')}</span>
+                <span className="text-sm text-[#f0ead8] truncate">{cap.titulo}</span>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-[#9a958a] shrink-0">
+                <span>{contarPalavras(cap.conteudo).toLocaleString('pt-BR')} palavras</span>
+                <ChevronRight size={15} className={'transition-transform ' + (capituloAberto === idx ? 'rotate-90' : '')} />
+              </div>
+            </button>
+            {capituloAberto === idx && (
+              <div className="px-5 pb-5 pt-1 border-t" style={{ borderColor: 'rgba(212,175,55,0.1)' }}>
+                <div className="isf-serif text-[#d8d3c6] leading-8 text-base whitespace-pre-wrap">{cap.conteudo}</div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   FORJAR HISTÓRIA - MODO SIMPLES
+========================================================= */
+
+function ForjarHistoria({ criarHistoria, setView, setActiveStoryId, apiConfigurada, universos }) {
+  const [modoAvancado, setModoAvancado] = useState(false);
+  const [form, setForm] = useState({
+    titulo: '', genero: GENEROS[0], sinopse: '', protagonistas: '',
+    pov: PONTOS_DE_VISTA[0], tom: TONS[0], objetivoFinal: '',
+    capitulosTotais: 5, palavrasPorCapitulo: 1500,
+    mundoAvancado: camposImperioVazios(),
+  });
+  const [avisoSemChave, setAvisoSemChave] = useState(false);
+
+  function set(campo, valor) { setForm((f) => ({ ...f, [campo]: valor })); }
+  function setMundo(chave, valor) { setForm((f) => ({ ...f, mundoAvancado: { ...f.mundoAvancado, [chave]: valor } })); }
+
+  function importarImperio(id) {
+    const imperio = universos.find((u) => u.id === id);
+    if (!imperio) return;
+    const novoMundo = camposImperioVazios();
+    CAMPOS_IMPERIO.forEach((c) => { novoMundo[c.chave] = imperio[c.chave] || ''; });
+    setForm((f) => ({ ...f, mundoAvancado: novoMundo }));
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (!form.titulo.trim() || !form.sinopse.trim() || !form.objetivoFinal.trim()) return;
+    const id = criarHistoria({ ...form, mundoAvancado: modoAvancado ? form.mundoAvancado : null });
+    if (!apiConfigurada) setAvisoSemChave(true);
+    setActiveStoryId(id);
+    setView('gaveta');
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="isf-glass rounded-2xl p-5 md:p-6">
+        <div className="isf-display text-lg text-[#f4e4a6] mb-1">Forjar Nova História</div>
+        <div className="text-sm text-[#9a958a]">Modo Simples - defina os pilares da sua obra. A IA escreve, você comanda.</div>
+      </div>
+
+      {!apiConfigurada && (
+        <div className="isf-glass rounded-xl p-4 flex items-start gap-3 text-sm" style={{ borderColor: 'rgba(212,175,55,0.3)', color: '#e0c878' }}>
+          <Key size={16} className="shrink-0 mt-0.5" />
+          <span>Nenhuma chave API configurada. Você pode criar a história agora, mas precisará configurar a chave em <b>Configurações</b> antes de forjar o primeiro capítulo.</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="isf-glass rounded-2xl p-5 md:p-6 space-y-5">
+        <Campo label="Título">
+          <input value={form.titulo} onChange={(e) => set('titulo', e.target.value)} required
+            className="isf-input" placeholder="O nome da sua obra" />
+        </Campo>
+
+        <Campo label="Gênero">
+          <select value={form.genero} onChange={(e) => set('genero', e.target.value)} className="isf-input">
+            {GENEROS.map((g) => <option key={g} value={g}>{g}</option>)}
+          </select>
+        </Campo>
+
+        <Campo label="Ideia Principal / Sinopse">
+          <textarea value={form.sinopse} onChange={(e) => set('sinopse', e.target.value)} required
+            className="isf-input resize-none" style={{ minHeight: '90px' }}
+            placeholder="Descreva a premissa central da história" />
+        </Campo>
+
+        <Campo label="Protagonistas">
+          <textarea value={form.protagonistas} onChange={(e) => set('protagonistas', e.target.value)}
+            className="isf-input resize-none" style={{ minHeight: '60px' }}
+            placeholder="Nomes e descrições breves dos protagonistas" />
+        </Campo>
+
+        <Campo label="Ponto de Vista">
+          <select value={form.pov} onChange={(e) => set('pov', e.target.value)} className="isf-input">
+            {PONTOS_DE_VISTA.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+        </Campo>
+
+        <Campo label="Tom da Narrativa">
+          <select value={form.tom} onChange={(e) => set('tom', e.target.value)} className="isf-input">
+            {TONS.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </Campo>
+
+        <Campo label="Objetivo Final">
+          <textarea value={form.objetivoFinal} onChange={(e) => set('objetivoFinal', e.target.value)} required
+            className="isf-input resize-none" style={{ minHeight: '70px' }}
+            placeholder="Onde a história precisa chegar no último capítulo" />
+        </Campo>
+
+        <Campo label={'Quantidade de Capítulos: ' + form.capitulosTotais}>
+          <input type="number" min={1} max={1000} value={form.capitulosTotais}
+            onChange={(e) => set('capitulosTotais', Math.max(1, Math.min(1000, Number(e.target.value) || 1)))}
+            className="isf-input" />
+          <div className="flex flex-wrap gap-2 mt-2">
+            {CAPITULOS_SUGERIDOS.map((n) => (
+              <button type="button" key={n} onClick={() => set('capitulosTotais', n)}
+                className="text-[11px] px-2.5 py-1 rounded-full"
+                style={{ border: '1px solid rgba(212,175,55,0.25)', color: form.capitulosTotais === n ? '#0a0a0a' : '#d4af37', background: form.capitulosTotais === n ? '#d4af37' : 'transparent' }}>
+                {n}
+              </button>
+            ))}
+          </div>
+        </Campo>
+
+        <Campo label={'Palavras por Capítulo: ~' + form.palavrasPorCapitulo}>
+          <input type="number" min={300} max={6000} step={100} value={form.palavrasPorCapitulo}
+            onChange={(e) => set('palavrasPorCapitulo', Math.max(300, Math.min(6000, Number(e.target.value) || 300)))}
+            className="isf-input" />
+        </Campo>
+
+        <div className="rounded-lg p-3 flex items-center justify-between" style={{ border: '1px solid rgba(212,175,55,0.18)' }}>
+          <div className="flex items-center gap-2 text-sm text-[#d8d3c6]">
+            <Crown size={14} color="#d4af37" />
+            Modo Avançado (mundo, facções, plot twists, antagonistas)
+          </div>
+          <button type="button" onClick={() => setModoAvancado((v) => !v)}
+            className="text-[11px] px-2.5 py-1 rounded-full"
+            style={{ border: '1px solid rgba(212,175,55,0.3)', color: modoAvancado ? '#0a0a0a' : '#d4af37', background: modoAvancado ? '#d4af37' : 'transparent' }}>
+            {modoAvancado ? 'Ativado' : 'Ativar'}
+          </button>
+        </div>
+
+        {modoAvancado && (
+          <div className="space-y-4 rounded-xl p-4" style={{ border: '1px dashed rgba(212,175,55,0.25)' }}>
+            {universos.length > 0 && (
+              <Campo label="Importar de um Império existente (opcional)">
+                <select onChange={(e) => e.target.value && importarImperio(e.target.value)} defaultValue="" className="isf-input">
+                  <option value="">Selecione um Império para pré-preencher os campos...</option>
+                  {universos.map((u) => <option key={u.id} value={u.id}>{u.nome}</option>)}
+                </select>
+              </Campo>
+            )}
+            {CAMPOS_IMPERIO.map((campo) => {
+              const Icon = campo.icon;
+              return (
+                <Campo key={campo.chave} label={campo.label}>
+                  <div className="flex items-start gap-2">
+                    <Icon size={15} strokeWidth={1.6} color="#d4af37" className="mt-2 shrink-0" />
+                    <textarea
+                      value={form.mundoAvancado[campo.chave]}
+                      onChange={(e) => setMundo(campo.chave, e.target.value)}
+                      className="isf-input resize-none" style={{ minHeight: '54px' }}
+                      placeholder={campo.placeholder}
+                    />
+                  </div>
+                </Campo>
+              );
+            })}
+          </div>
+        )}
+
+        <button type="submit"
+          className="w-full isf-display text-xs tracking-widest uppercase py-3.5 rounded-lg isf-glow flex items-center justify-center gap-2"
+          style={{ background: 'rgba(212,175,55,0.14)', border: '1px solid rgba(212,175,55,0.45)', color: '#f4e4a6' }}>
+          <Feather size={15} /> Forjar História
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function Campo({ label, children }) {
+  return (
+    <label className="block space-y-1.5">
+      <div className="text-xs isf-display tracking-widest text-[#b8a468]">{label.toUpperCase()}</div>
+      {children}
+    </label>
+  );
+}
+
+/* =========================================================
+   CONFIGURAÇÕES
+========================================================= */
+
+function Configuracoes({ apiKey, setApiKey }) {
+  const [valor, setValor] = useState(apiKey);
+  const [visivel, setVisivel] = useState(false);
+  const [salvo, setSalvo] = useState(false);
+
+  function handleSalvar() {
+    setApiKey(valor.trim());
+    salvarChaveApi(valor.trim());
+    setSalvo(true);
+    setTimeout(() => setSalvo(false), 2000);
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="isf-glass rounded-2xl p-5 md:p-6">
+        <div className="isf-display text-lg text-[#f4e4a6] mb-1">Configurações</div>
+        <div className="text-sm text-[#9a958a]">Conecte sua chave da API Anthropic para ativar a geração de histórias.</div>
+      </div>
+
+      <div className="isf-glass rounded-2xl p-5 md:p-6 space-y-4">
+        <Campo label="Chave API (Anthropic)">
+          <div className="flex gap-2">
+            <input
+              type={visivel ? 'text' : 'password'}
+              value={valor}
+              onChange={(e) => setValor(e.target.value)}
+              placeholder="sk-ant-..."
+              className="isf-input flex-1"
+            />
+            <button type="button" onClick={() => setVisivel(!visivel)} className="px-3 rounded-lg" style={{ border: '1px solid rgba(212,175,55,0.2)', color: '#d4af37' }}>
+              {visivel ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+        </Campo>
+        <button
+          onClick={handleSalvar}
+          className="w-full isf-display text-xs tracking-widest uppercase py-3 rounded-lg isf-glow flex items-center justify-center gap-2"
+          style={{ background: 'rgba(212,175,55,0.14)', border: '1px solid rgba(212,175,55,0.45)', color: '#f4e4a6' }}
+        >
+          {salvo ? <Check size={15} /> : <Save size={15} />}
+          {salvo ? 'Chave Salva' : 'Salvar Chave'}
+        </button>
+        <div className="flex items-center gap-2 text-xs" style={{ color: apiKey ? '#7fd49a' : '#c0584a' }}>
+          <span className="w-2 h-2 rounded-full" style={{ background: apiKey ? '#7fd49a' : '#c0584a' }} />
+          {apiKey ? 'Chave configurada neste navegador' : 'Nenhuma chave configurada'}
+        </div>
+      </div>
+
+      <div className="isf-glass rounded-2xl p-5 space-y-3 text-sm text-[#9a958a] leading-relaxed">
+        <div className="isf-display text-xs tracking-widest text-[#d4af37]">SOBRE ESTA CHAVE</div>
+        <p>
+          A chave é gravada apenas no <b>localStorage do navegador</b> - nunca fica fixa no código-fonte
+          e nunca é enviada para nenhum servidor além da própria Anthropic. Cada pessoa que usar este site
+          (incluindo seus clientes finais, se você revender o código) configura a própria chave aqui,
+          de forma independente.
+        </p>
+      </div>
+
+      <div className="isf-glass rounded-2xl p-5 space-y-3 text-sm text-[#9a958a] leading-relaxed" style={{ borderColor: 'rgba(212,175,55,0.25)' }}>
+        <div className="isf-display text-xs tracking-widest text-[#d4af37] flex items-center gap-2">
+          <AlertCircle size={14} /> IMPORTANTE PARA O DEPLOY
+        </div>
+        <p>
+          Em produção (fora do ambiente de preview), o navegador faz a chamada diretamente à API da Anthropic
+          usando esta chave. Isso funciona, mas expõe a chave no tráfego do navegador do usuário final.
+        </p>
+        <p>
+          Se preferir uma camada extra de segurança - especialmente ao vender o código para clientes -
+          o caminho recomendado é um proxy simples (ex: Cloudflare Worker, como no Zenith Imperial) que
+          recebe a chave por variável de ambiente no servidor. Isso pode ser adicionado na Fase 2 sem
+          alterar a interface.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   FORJAR IMPÉRIO (construção de universos reutilizáveis)
+========================================================= */
+
+function ForjarImperio({ universos, criarUniverso, atualizarUniverso, excluirUniverso }) {
+  const [editandoId, setEditandoId] = useState(null);
+  const [criando, setCriando] = useState(false);
+  const [confirmarExclusao, setConfirmarExclusao] = useState(null);
+  const vazio = () => ({ nome: '', ...camposImperioVazios() });
+  const [form, setForm] = useState(vazio());
+
+  function set(chave, valor) { setForm((f) => ({ ...f, [chave]: valor })); }
+
+  function abrirNovo() {
+    setForm(vazio());
+    setCriando(true);
+    setEditandoId(null);
+  }
+
+  function abrirEdicao(u) {
+    setForm({ ...vazio(), ...u });
+    setEditandoId(u.id);
+    setCriando(true);
+  }
+
+  function fechar() {
+    setCriando(false);
+    setEditandoId(null);
+    setForm(vazio());
+  }
+
+  function salvar(e) {
+    e.preventDefault();
+    if (!form.nome.trim()) return;
+    if (editandoId) atualizarUniverso(editandoId, form);
+    else criarUniverso(form);
+    fechar();
+  }
+
+  if (!criando) {
+    return (
+      <div className="space-y-6">
+        <div className="isf-glass rounded-2xl p-5 md:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <div className="isf-display text-lg text-[#f4e4a6] mb-1">Forjar Império</div>
+            <div className="text-sm text-[#9a958a]">Construa universos completos e reutilizáveis: mundo, facções, reinos, sistema de poder e mais.</div>
+          </div>
+          <button onClick={abrirNovo}
+            className="isf-display text-xs tracking-widest uppercase px-5 py-3 rounded-lg isf-glow flex items-center gap-2 shrink-0"
+            style={{ background: 'rgba(212,175,55,0.14)', border: '1px solid rgba(212,175,55,0.45)', color: '#f4e4a6' }}>
+            <Plus size={15} /> Novo Império
+          </button>
+        </div>
+
+        {universos.length === 0 ? (
+          <div className="isf-glass rounded-2xl p-10 text-center space-y-4">
+            <SeloImperial size={56} />
+            <div className="isf-display text-lg text-[#f0ead8]">Nenhum império forjado ainda</div>
+            <div className="text-sm text-[#9a958a] max-w-md mx-auto">
+              Crie um universo aqui para reutilizá-lo no Modo Avançado de qualquer história, e visualizá-lo no Atlas de Universos.
+            </div>
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {universos.map((u) => {
+              const preenchidos = CAMPOS_IMPERIO.filter((c) => (u[c.chave] || '').trim()).length;
+              return (
+                <div key={u.id} className="isf-glass rounded-2xl p-5 flex flex-col gap-3">
+                  <div className="isf-display text-base text-[#f4e4a6]">{u.nome}</div>
+                  <p className="text-sm text-[#c9c4b8] isf-serif leading-relaxed line-clamp-3">{u.descricaoMundo || 'Sem descrição de mundo ainda.'}</p>
+                  <div className="text-xs text-[#9a958a]">{preenchidos} / {CAMPOS_IMPERIO.length} campos preenchidos</div>
+                  <div className="flex gap-2 pt-1">
+                    <button onClick={() => abrirEdicao(u)}
+                      className="flex-1 isf-display text-[11px] tracking-widest uppercase py-2 rounded-lg flex items-center justify-center gap-1.5"
+                      style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', color: '#f4e4a6' }}>
+                      <Pencil size={13} /> Editar
+                    </button>
+                    {confirmarExclusao === u.id ? (
+                      <>
+                        <button onClick={() => excluirUniverso(u.id)} className="px-3 rounded-lg text-xs" style={{ background: 'rgba(192,88,74,0.18)', border: '1px solid rgba(192,88,74,0.5)', color: '#e0a094' }}>
+                          Confirmar
+                        </button>
+                        <button onClick={() => setConfirmarExclusao(null)} className="px-3 rounded-lg text-xs text-[#9a958a]" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
+                          <X size={14} />
+                        </button>
+                      </>
+                    ) : (
+                      <button onClick={() => setConfirmarExclusao(u.id)} className="px-3 rounded-lg" style={{ border: '1px solid rgba(255,255,255,0.08)', color: '#9a958a' }}>
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <button onClick={fechar} className="flex items-center gap-2 text-sm text-[#9a958a] hover:text-[#d4af37]">
+        <ArrowLeft size={15} /> Voltar
+      </button>
+      <div className="isf-glass rounded-2xl p-5 md:p-6">
+        <div className="isf-display text-lg text-[#f4e4a6] mb-1">{editandoId ? 'Editar Império' : 'Novo Império'}</div>
+        <div className="text-sm text-[#9a958a]">Cada campo é opcional, mas quanto mais completo, mais rico o universo disponível para suas histórias.</div>
+      </div>
+      <form onSubmit={salvar} className="isf-glass rounded-2xl p-5 md:p-6 space-y-5">
+        <Campo label="Nome do Império / Universo">
+          <input value={form.nome} onChange={(e) => set('nome', e.target.value)} required
+            className="isf-input" placeholder="Ex: O Império de Aethros" />
+        </Campo>
+        {CAMPOS_IMPERIO.map((campo) => {
+          const Icon = campo.icon;
+          return (
+            <Campo key={campo.chave} label={campo.label}>
+              <div className="flex items-start gap-2">
+                <Icon size={15} strokeWidth={1.6} color="#d4af37" className="mt-2 shrink-0" />
+                <textarea
+                  value={form[campo.chave]}
+                  onChange={(e) => set(campo.chave, e.target.value)}
+                  className="isf-input resize-none" style={{ minHeight: '60px' }}
+                  placeholder={campo.placeholder}
+                />
+              </div>
+            </Campo>
+          );
+        })}
+        <button type="submit"
+          className="w-full isf-display text-xs tracking-widest uppercase py-3.5 rounded-lg isf-glow flex items-center justify-center gap-2"
+          style={{ background: 'rgba(212,175,55,0.14)', border: '1px solid rgba(212,175,55,0.45)', color: '#f4e4a6' }}>
+          <Crown size={15} /> {editandoId ? 'Salvar Alterações' : 'Forjar Império'}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+/* =========================================================
+   ATLAS DE UNIVERSOS
+========================================================= */
+
+function AtlasUniversos({ universos }) {
+  const [universoId, setUniversoId] = useState(universos[0] ? universos[0].id : null);
+
+  if (universos.length === 0) {
+    return (
+      <div className="isf-glass rounded-2xl p-10 text-center space-y-4">
+        <SeloImperial size={56} />
+        <div className="isf-display text-lg text-[#f0ead8]">O Atlas está vazio</div>
+        <div className="text-sm text-[#9a958a] max-w-md mx-auto">
+          Forje um Império primeiro - o Atlas exibe visualmente reinos, facções, raças, religiões, conflitos e mais de cada universo.
+        </div>
+      </div>
+    );
+  }
+
+  const universo = universos.find((u) => u.id === universoId) || universos[0];
+
+  return (
+    <div className="space-y-5">
+      <div className="isf-glass rounded-2xl p-5 flex flex-col md:flex-row md:items-center gap-3 md:gap-6">
+        <div className="isf-display text-xs tracking-widest text-[#d4af37] shrink-0">IMPÉRIO</div>
+        <select value={universo.id} onChange={(e) => setUniversoId(e.target.value)} className="isf-input md:max-w-sm">
+          {universos.map((u) => <option key={u.id} value={u.id}>{u.nome}</option>)}
+        </select>
+      </div>
+
+      <div className="isf-glass isf-glow rounded-2xl p-6 flex items-center gap-5">
+        <SeloImperial size={56} />
+        <div>
+          <div className="isf-display text-xl text-[#f4e4a6]">{universo.nome}</div>
+          {universo.descricaoMundo && <p className="text-sm text-[#c9c4b8] isf-serif leading-relaxed mt-1">{universo.descricaoMundo}</p>}
+        </div>
+      </div>
+
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {CAMPOS_IMPERIO.filter((c) => c.chave !== 'descricaoMundo').map((campo) => {
+          const valor = (universo[campo.chave] || '').trim();
+          if (!valor) return null;
+          const Icon = campo.icon;
+          if (campo.tipo === 'lista') {
+            const itens = valor.split('\n').map((l) => l.trim()).filter(Boolean);
+            return (
+              <div key={campo.chave} className="isf-glass rounded-xl p-4 space-y-2">
+                <div className="isf-display text-xs tracking-widest text-[#d4af37] flex items-center gap-2">
+                  <Icon size={14} /> {campo.label.toUpperCase()}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {itens.map((item, idx) => <Etiqueta key={idx}>{item}</Etiqueta>)}
+                </div>
+              </div>
+            );
+          }
+          return (
+            <div key={campo.chave} className="isf-glass rounded-xl p-4 space-y-2">
+              <div className="isf-display text-xs tracking-widest text-[#d4af37] flex items-center gap-2">
+                <Icon size={14} /> {campo.label.toUpperCase()}
+              </div>
+              <p className="text-sm text-[#c9c4b8] isf-serif leading-relaxed">{valor}</p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   BIBLIOTECA IMPERIAL
+========================================================= */
+
+function BibliotecaImperial({ stories }) {
+  const [storyId, setStoryId] = useState(stories[0] ? stories[0].id : null);
+  const [categoria, setCategoria] = useState('personagens');
+
+  if (stories.length === 0) {
+    return (
+      <div className="isf-glass rounded-2xl p-10 text-center space-y-4">
+        <SeloImperial size={56} />
+        <div className="isf-display text-lg text-[#f0ead8]">A Biblioteca está vazia</div>
+        <div className="text-sm text-[#9a958a] max-w-md mx-auto">
+          Forje histórias e gere capítulos para que a memória viva - personagens, locais, facções, objetos e eventos - seja registrada automaticamente aqui.
+        </div>
+      </div>
+    );
+  }
+
+  const story = stories.find((s) => s.id === storyId) || stories[0];
+  const memoria = story.memoria || MEMORIA_VAZIA;
+  const itens = memoria[categoria] || [];
+
+  return (
+    <div className="space-y-5">
+      <div className="isf-glass rounded-2xl p-5 flex flex-col md:flex-row md:items-center gap-3 md:gap-6">
+        <div className="isf-display text-xs tracking-widest text-[#d4af37] shrink-0">HISTÓRIA</div>
+        <select value={story.id} onChange={(e) => setStoryId(e.target.value)} className="isf-input md:max-w-sm">
+          {stories.map((s) => <option key={s.id} value={s.id}>{s.titulo}</option>)}
+        </select>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {MEMORIA_CATEGORIAS.map((cat) => {
+          const Icon = cat.icon;
+          const count = (memoria[cat.chave] || []).length;
+          const ativo = categoria === cat.chave;
+          return (
+            <button
+              key={cat.chave}
+              onClick={() => setCategoria(cat.chave)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
+              style={{
+                background: ativo ? 'rgba(212,175,55,0.12)' : 'transparent',
+                border: '1px solid ' + (ativo ? 'rgba(212,175,55,0.4)' : 'rgba(255,255,255,0.08)'),
+                color: ativo ? '#f4e4a6' : '#9a958a',
+              }}
+            >
+              <Icon size={15} strokeWidth={1.6} />
+              {cat.label}
+              <span className="text-[11px] opacity-70">{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {itens.length === 0 ? (
+        <div className="isf-glass rounded-xl p-6 text-sm text-[#9a958a]">
+          Nenhum registro nesta categoria ainda. A memória é preenchida automaticamente conforme novos capítulos são forjados.
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 gap-4">
+          {itens.map((item, idx) => (
+            <div key={idx} className="isf-glass rounded-xl p-4 space-y-1.5">
+              <div className="isf-display text-sm text-[#f4e4a6]">{paraTexto(item.nome || item.titulo)}</div>
+              <div className="flex flex-wrap gap-1.5">
+                {item.papel && <Etiqueta>{paraTexto(item.papel)}</Etiqueta>}
+                {item.tipo && <Etiqueta>{paraTexto(item.tipo)}</Etiqueta>}
+                {item.status && <Etiqueta color="#7fd49a">{paraTexto(item.status)}</Etiqueta>}
+              </div>
+              {item.descricao && <p className="text-sm text-[#c9c4b8] isf-serif leading-relaxed">{paraTexto(item.descricao)}</p>}
+              {item.tracos && <div className="text-xs text-[#9a958a]"><b>Traços: </b>{paraTexto(item.tracos)}</div>}
+              {item.relacionamentos && <div className="text-xs text-[#9a958a]"><b>Relações: </b>{paraTexto(item.relacionamentos)}</div>}
+              {item.portador && <div className="text-xs text-[#9a958a]"><b>Com: </b>{paraTexto(item.portador)}</div>}
+              {item.atualizadoNoCapitulo && (
+                <div className="text-[11px] text-[#6b6760] pt-1">Atualizado no capítulo {item.atualizadoNoCapitulo}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   MENTOR LITERÁRIO
+========================================================= */
+
+function MentorLiterario({ stories, apiKey, atualizarHistoria }) {
+  const [storyId, setStoryId] = useState(stories[0] ? stories[0].id : null);
+  const [capituloIdx, setCapituloIdx] = useState(null);
+  const [analisando, setAnalisando] = useState(false);
+  const [erro, setErro] = useState('');
+
+  if (stories.length === 0) {
+    return (
+      <div className="isf-glass rounded-2xl p-10 text-center space-y-4">
+        <SeloImperial size={56} />
+        <div className="isf-display text-lg text-[#f0ead8]">Nenhuma história para analisar</div>
+        <div className="text-sm text-[#9a958a] max-w-md mx-auto">Forje uma história e gere capítulos para que o Mentor Literário possa avaliá-los.</div>
+      </div>
+    );
+  }
+
+  const story = stories.find((s) => s.id === storyId) || stories[0];
+  const idx = capituloIdx == null ? story.capitulos.length - 1 : capituloIdx;
+  const capitulo = story.capitulos[idx];
+  const analise = story.ultimaAnalise;
+
+  async function handleAnalisar() {
+    if (!apiKey) { setErro('Configure sua chave API em Configurações.'); return; }
+    if (!capitulo) { setErro('Esta história ainda não possui capítulos.'); return; }
+    setErro('');
+    setAnalisando(true);
+    try {
+      const resultado = await analisarComMentor({ apiKey, story, capitulo });
+      if (!resultado) throw new Error('Não foi possível interpretar a análise retornada pela IA.');
+      atualizarHistoria(story.id, { ultimaAnalise: { ...resultado, capituloNumero: capitulo.numero, analisadoEm: new Date().toISOString() } });
+    } catch (e) {
+      setErro(e.message || 'Falha ao analisar capítulo.');
+    } finally {
+      setAnalisando(false);
+    }
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="isf-glass rounded-2xl p-5 flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+        <div className="isf-display text-xs tracking-widest text-[#d4af37] shrink-0">HISTÓRIA</div>
+        <select value={story.id} onChange={(e) => { setStoryId(e.target.value); setCapituloIdx(null); }} className="isf-input md:max-w-sm">
+          {stories.map((s) => <option key={s.id} value={s.id}>{s.titulo}</option>)}
+        </select>
+        {story.capitulos.length > 0 && (
+          <select value={idx} onChange={(e) => setCapituloIdx(Number(e.target.value))} className="isf-input md:max-w-xs">
+            {story.capitulos.map((c, i) => <option key={c.numero} value={i}>Capítulo {c.numero} - {c.titulo}</option>)}
+          </select>
+        )}
+      </div>
+
+      {story.capitulos.length === 0 ? (
+        <div className="isf-glass rounded-xl p-6 text-sm text-[#9a958a]">Esta história ainda não possui capítulos forjados.</div>
+      ) : (
+        <>
+          {erro && (
+            <div className="isf-glass rounded-xl p-4 flex items-start gap-3 text-sm" style={{ borderColor: 'rgba(192,88,74,0.4)', color: '#e0a094' }}>
+              <AlertCircle size={16} className="shrink-0 mt-0.5" />
+              <span>{erro}</span>
+            </div>
+          )}
+
+          <button onClick={handleAnalisar} disabled={analisando}
+            className="isf-display text-xs tracking-widest uppercase px-5 py-3 rounded-lg isf-glow flex items-center gap-2 disabled:opacity-50"
+            style={{ background: 'rgba(212,175,55,0.12)', border: '1px solid rgba(212,175,55,0.4)', color: '#f4e4a6' }}>
+            {analisando ? <Loader2 size={15} className="animate-spin" /> : <GraduationCap size={15} />}
+            {analisando ? 'Analisando...' : 'Analisar Capítulo ' + capitulo.numero}
+          </button>
+
+          {analise && (
+            <div className="space-y-4">
+              <div className="isf-glass rounded-2xl p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="isf-display text-xs tracking-widest text-[#d4af37]">AVALIAÇÃO - CAPÍTULO {analise.capituloNumero}</div>
+                  <span className="text-[11px] text-[#6b6760]">{formatarData(analise.analisadoEm)}</span>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {ANALISE_CATEGORIAS.map((cat) => {
+                    const valor = Number(analise[cat.chave]) || 0;
+                    return (
+                      <div key={cat.chave} className="space-y-1.5">
+                        <div className="flex justify-between text-xs text-[#c9c4b8]">
+                          <span>{cat.label}</span>
+                          <span className="isf-display text-[#f4e4a6]">{valor}/10</span>
+                        </div>
+                        <Barra progresso={valor * 10} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              {analise.pontosFortes && (
+                <div className="isf-glass rounded-2xl p-5 space-y-2">
+                  <div className="isf-display text-xs tracking-widest text-[#d4af37] flex items-center gap-2"><Star size={14} /> PONTOS FORTES</div>
+                  <p className="text-sm text-[#d8d3c6] isf-serif leading-relaxed">{analise.pontosFortes}</p>
+                </div>
+              )}
+              {analise.sugestoes && (
+                <div className="isf-glass rounded-2xl p-5 space-y-2">
+                  <div className="isf-display text-xs tracking-widest text-[#d4af37] flex items-center gap-2"><Wand2 size={14} /> SUGESTÕES DE MELHORIA</div>
+                  <p className="text-sm text-[#d8d3c6] isf-serif leading-relaxed">{analise.sugestoes}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   PLANEJADOR DE SAGA
+========================================================= */
+
+function PlanejadorSaga({ stories, apiKey, atualizarHistoria }) {
+  const [storyId, setStoryId] = useState(stories[0] ? stories[0].id : null);
+  const [gerando, setGerando] = useState(false);
+  const [erro, setErro] = useState('');
+  const [novoArco, setNovoArco] = useState({ titulo: '', descricao: '', capituloInicio: 1, capituloFim: 1 });
+
+  if (stories.length === 0) {
+    return (
+      <div className="isf-glass rounded-2xl p-10 text-center space-y-4">
+        <SeloImperial size={56} />
+        <div className="isf-display text-lg text-[#f0ead8]">Nenhuma saga para planejar</div>
+        <div className="text-sm text-[#9a958a] max-w-md mx-auto">Forje uma história para começar a estruturar arcos narrativos aqui.</div>
+      </div>
+    );
+  }
+
+  const story = stories.find((s) => s.id === storyId) || stories[0];
+  const arcos = (story.planejamento && story.planejamento.arcos) || [];
+
+  async function handleGerarPlano() {
+    if (!apiKey) { setErro('Configure sua chave API em Configurações.'); return; }
+    setErro('');
+    setGerando(true);
+    try {
+      const novosArcos = await gerarPlanoSaga({ apiKey, story });
+      if (!novosArcos.length) throw new Error('A IA não retornou um plano válido. Tente novamente.');
+      atualizarHistoria(story.id, { planejamento: { arcos: novosArcos } });
+    } catch (e) {
+      setErro(e.message || 'Falha ao gerar plano.');
+    } finally {
+      setGerando(false);
+    }
+  }
+
+  function adicionarArco(e) {
+    e.preventDefault();
+    if (!novoArco.titulo.trim()) return;
+    const arco = {
+      titulo: novoArco.titulo.trim(),
+      descricao: novoArco.descricao.trim(),
+      capituloInicio: Number(novoArco.capituloInicio) || 1,
+      capituloFim: Number(novoArco.capituloFim) || 1,
+    };
+    atualizarHistoria(story.id, { planejamento: { arcos: [...arcos, arco] } });
+    setNovoArco({ titulo: '', descricao: '', capituloInicio: 1, capituloFim: 1 });
+  }
+
+  function removerArco(idx) {
+    atualizarHistoria(story.id, { planejamento: { arcos: arcos.filter((_, i) => i !== idx) } });
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="isf-glass rounded-2xl p-5 flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+        <div className="isf-display text-xs tracking-widest text-[#d4af37] shrink-0">HISTÓRIA</div>
+        <select value={story.id} onChange={(e) => setStoryId(e.target.value)} className="isf-input md:max-w-sm">
+          {stories.map((s) => <option key={s.id} value={s.id}>{s.titulo}</option>)}
+        </select>
+      </div>
+
+      {erro && (
+        <div className="isf-glass rounded-xl p-4 flex items-start gap-3 text-sm" style={{ borderColor: 'rgba(192,88,74,0.4)', color: '#e0a094' }}>
+          <AlertCircle size={16} className="shrink-0 mt-0.5" />
+          <span>{erro}</span>
+        </div>
+      )}
+
+      <button onClick={handleGerarPlano} disabled={gerando}
+        className="isf-display text-xs tracking-widest uppercase px-5 py-3 rounded-lg isf-glow flex items-center gap-2 disabled:opacity-50"
+        style={{ background: 'rgba(212,175,55,0.12)', border: '1px solid rgba(212,175,55,0.4)', color: '#f4e4a6' }}>
+        {gerando ? <Loader2 size={15} className="animate-spin" /> : <Milestone size={15} />}
+        {gerando ? 'Planejando saga...' : (arcos.length ? 'Gerar Novo Plano com IA' : 'Gerar Plano com IA')}
+      </button>
+
+      <div className="space-y-3">
+        {arcos.length === 0 ? (
+          <div className="isf-glass rounded-xl p-6 text-sm text-[#9a958a]">Nenhum arco definido ainda.</div>
+        ) : (
+          arcos.map((arco, idx) => {
+            const total = story.capitulos.length;
+            const inicio = Number(arco.capituloInicio) || 1;
+            const fim = Number(arco.capituloFim) || inicio;
+            const capsNoArco = Math.max(1, fim - inicio + 1);
+            const gerados = Math.max(0, Math.min(fim, total) - inicio + 1);
+            const progresso = (Math.max(0, gerados) / capsNoArco) * 100;
+            return (
+              <div key={idx} className="isf-glass rounded-xl p-4 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="isf-display text-sm text-[#f4e4a6]">{arco.titulo}</div>
+                    <div className="text-xs text-[#9a958a]">Capítulos {inicio} a {fim}</div>
+                  </div>
+                  <button onClick={() => removerArco(idx)} className="px-2 rounded-lg shrink-0" style={{ border: '1px solid rgba(255,255,255,0.08)', color: '#9a958a' }}>
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+                {arco.descricao && <p className="text-sm text-[#c9c4b8] isf-serif leading-relaxed">{arco.descricao}</p>}
+                <Barra progresso={progresso} />
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <div className="isf-glass rounded-2xl p-5 space-y-3">
+        <div className="isf-display text-xs tracking-widest text-[#d4af37]">ADICIONAR ARCO MANUALMENTE</div>
+        <form onSubmit={adicionarArco} className="space-y-3">
+          <Campo label="Título do Arco">
+            <input value={novoArco.titulo} onChange={(e) => setNovoArco((a) => ({ ...a, titulo: e.target.value }))} className="isf-input" placeholder="Ex: A Queda de Aethros" />
+          </Campo>
+          <Campo label="Descrição">
+            <textarea value={novoArco.descricao} onChange={(e) => setNovoArco((a) => ({ ...a, descricao: e.target.value }))} className="isf-input resize-none" style={{ minHeight: '50px' }} placeholder="O que acontece neste arco..." />
+          </Campo>
+          <div className="grid grid-cols-2 gap-3">
+            <Campo label="Capítulo Inicial">
+              <input type="number" min={1} value={novoArco.capituloInicio} onChange={(e) => setNovoArco((a) => ({ ...a, capituloInicio: e.target.value }))} className="isf-input" />
+            </Campo>
+            <Campo label="Capítulo Final">
+              <input type="number" min={1} value={novoArco.capituloFim} onChange={(e) => setNovoArco((a) => ({ ...a, capituloFim: e.target.value }))} className="isf-input" />
+            </Campo>
+          </div>
+          <button type="submit" className="w-full isf-display text-xs tracking-widest uppercase py-2.5 rounded-lg flex items-center justify-center gap-2"
+            style={{ border: '1px solid rgba(212,175,55,0.3)', color: '#d4af37' }}>
+            <Plus size={14} /> Adicionar Arco
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   SALA DO AUTOR
+========================================================= */
+
+function SalaDoAutor({ notas, criarNota, atualizarNota, excluirNota }) {
+  const [editandoId, setEditandoId] = useState(null);
+  const [form, setForm] = useState({ titulo: '', conteudo: '' });
+  const [confirmarExclusao, setConfirmarExclusao] = useState(null);
+
+  function abrirNova() {
+    setForm({ titulo: '', conteudo: '' });
+    setEditandoId('nova');
+  }
+  function abrirEdicao(n) {
+    setForm({ titulo: n.titulo, conteudo: n.conteudo });
+    setEditandoId(n.id);
+  }
+  function fechar() {
+    setEditandoId(null);
+    setForm({ titulo: '', conteudo: '' });
+  }
+  function salvar(e) {
+    e.preventDefault();
+    if (!form.titulo.trim() && !form.conteudo.trim()) { fechar(); return; }
+    if (editandoId === 'nova') criarNota(form);
+    else atualizarNota(editandoId, form);
+    fechar();
+  }
+
+  if (editandoId) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <button onClick={fechar} className="flex items-center gap-2 text-sm text-[#9a958a] hover:text-[#d4af37]">
+          <ArrowLeft size={15} /> Voltar
+        </button>
+        <form onSubmit={salvar} className="isf-glass rounded-2xl p-5 md:p-6 space-y-4">
+          <Campo label="Título">
+            <input value={form.titulo} onChange={(e) => setForm((f) => ({ ...f, titulo: e.target.value }))} className="isf-input" placeholder="Título da anotação" />
+          </Campo>
+          <Campo label="Conteúdo">
+            <textarea value={form.conteudo} onChange={(e) => setForm((f) => ({ ...f, conteudo: e.target.value }))} className="isf-input resize-none isf-serif" style={{ minHeight: '240px' }} placeholder="Suas notas, referências e ideias..." />
+          </Campo>
+          <button type="submit" className="w-full isf-display text-xs tracking-widest uppercase py-3 rounded-lg isf-glow flex items-center justify-center gap-2"
+            style={{ background: 'rgba(212,175,55,0.14)', border: '1px solid rgba(212,175,55,0.45)', color: '#f4e4a6' }}>
+            <Save size={15} /> Salvar Nota
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="isf-glass rounded-2xl p-5 md:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <div className="isf-display text-lg text-[#f4e4a6] mb-1">Sala do Autor</div>
+          <div className="text-sm text-[#9a958a]">Seu espaço pessoal para anotações, referências e processo criativo.</div>
+        </div>
+        <button onClick={abrirNova} className="isf-display text-xs tracking-widest uppercase px-5 py-3 rounded-lg isf-glow flex items-center gap-2 shrink-0"
+          style={{ background: 'rgba(212,175,55,0.14)', border: '1px solid rgba(212,175,55,0.45)', color: '#f4e4a6' }}>
+          <Plus size={15} /> Nova Nota
+        </button>
+      </div>
+
+      {notas.length === 0 ? (
+        <div className="isf-glass rounded-2xl p-10 text-center space-y-4">
+          <SeloImperial size={56} />
+          <div className="isf-display text-lg text-[#f0ead8]">Nenhuma anotação ainda</div>
+          <div className="text-sm text-[#9a958a] max-w-md mx-auto">Use este espaço para guardar referências, ideias soltas e reflexões sobre seu processo criativo.</div>
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {notas.map((n) => (
+            <div key={n.id} className="isf-glass rounded-xl p-4 flex flex-col gap-2">
+              <div className="isf-display text-sm text-[#f4e4a6] flex items-center gap-2"><StickyNote size={14} /> {n.titulo || 'Sem título'}</div>
+              <p className="text-sm text-[#c9c4b8] isf-serif leading-relaxed line-clamp-4">{n.conteudo}</p>
+              <div className="text-[11px] text-[#6b6760]">{formatarData(n.atualizadoEm)}</div>
+              <div className="flex gap-2 pt-1">
+                <button onClick={() => abrirEdicao(n)} className="flex-1 isf-display text-[11px] tracking-widest uppercase py-2 rounded-lg flex items-center justify-center gap-1.5"
+                  style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', color: '#f4e4a6' }}>
+                  <Pencil size={12} /> Editar
+                </button>
+                {confirmarExclusao === n.id ? (
+                  <>
+                    <button onClick={() => excluirNota(n.id)} className="px-3 rounded-lg text-xs" style={{ background: 'rgba(192,88,74,0.18)', border: '1px solid rgba(192,88,74,0.5)', color: '#e0a094' }}>Confirmar</button>
+                    <button onClick={() => setConfirmarExclusao(null)} className="px-3 rounded-lg text-xs text-[#9a958a]" style={{ border: '1px solid rgba(255,255,255,0.1)' }}><X size={14} /></button>
+                  </>
+                ) : (
+                  <button onClick={() => setConfirmarExclusao(n.id)} className="px-3 rounded-lg" style={{ border: '1px solid rgba(255,255,255,0.08)', color: '#9a958a' }}><Trash2 size={14} /></button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   MENTE SUPREMA
+========================================================= */
+
+function MenteSuprema({ stories, apiKey, atualizarHistoria }) {
+  const [storyId, setStoryId] = useState(stories[0] ? stories[0].id : null);
+  const [mensagens, setMensagens] = useState([]);
+  const [pergunta, setPergunta] = useState('');
+  const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState('');
+  const [capituloIdx, setCapituloIdx] = useState('');
+  const [instrucao, setInstrucao] = useState('');
+  const [corrigindo, setCorrigindo] = useState(false);
+  const [revisao, setRevisao] = useState(null);
+
+  if (stories.length === 0) {
+    return (
+      <div className="isf-glass rounded-2xl p-10 text-center space-y-4">
+        <SeloImperial size={64} />
+        <div className="isf-display text-lg text-[#f0ead8]">A Mente Suprema aguarda</div>
+        <div className="text-sm text-[#9a958a] max-w-md mx-auto">Forje sua primeira história para ativar a central estratégica de IA.</div>
+      </div>
+    );
+  }
+
+  const story = stories.find((s) => s.id === storyId) || stories[0];
+
+  async function executarAcao(acao) {
+    if (!apiKey) { setErro('Configure sua chave API em Configurações.'); return; }
+    setErro('');
+    setMensagens((m) => [...m, { tipo: 'usuario', texto: acao.label }]);
+    if (acao.id === 'consistencia' && story.capitulos.length === 0) {
+      setMensagens((m) => [...m, { tipo: 'ia', texto: 'Esta história ainda não possui capítulos para revisar. Forje o primeiro capítulo e tente novamente.' }]);
+      return;
+    }
+    setCarregando(true);
+    try {
+      const resposta = acao.id === 'consistencia'
+        ? await verificarConsistencia({ apiKey, story })
+        : await consultarMenteSuprema({ apiKey, story, acaoId: acao.id });
+      setMensagens((m) => [...m, { tipo: 'ia', texto: resposta }]);
+    } catch (e) {
+      setErro(e.message || 'Falha ao consultar a Mente Suprema.');
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  async function enviarPergunta(e) {
+    e.preventDefault();
+    if (!pergunta.trim()) return;
+    if (!apiKey) { setErro('Configure sua chave API em Configurações.'); return; }
+    setErro('');
+    const texto = pergunta.trim();
+    setMensagens((m) => [...m, { tipo: 'usuario', texto }]);
+    setPergunta('');
+    setCarregando(true);
+    try {
+      const resposta = await consultarMenteSuprema({ apiKey, story, acaoId: 'livre', extra: texto });
+      setMensagens((m) => [...m, { tipo: 'ia', texto: resposta }]);
+    } catch (e) {
+      setErro(e.message || 'Falha ao consultar a Mente Suprema.');
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  async function handleCorrigir() {
+    if (!apiKey) { setErro('Configure sua chave API em Configurações.'); return; }
+    if (capituloIdx === '' || !story.capitulos[capituloIdx]) { setErro('Selecione um capítulo para corrigir.'); return; }
+    if (!instrucao.trim()) { setErro('Descreva o que deve ser corrigido.'); return; }
+    setErro('');
+    setCorrigindo(true);
+    setRevisao(null);
+    try {
+      const resultado = await corrigirCapitulo({ apiKey, story, capitulo: story.capitulos[capituloIdx], instrucao: instrucao.trim() });
+      setRevisao(resultado);
+    } catch (e) {
+      setErro(e.message || 'Falha ao corrigir capítulo.');
+    } finally {
+      setCorrigindo(false);
+    }
+  }
+
+  function aplicarRevisao() {
+    if (!revisao || capituloIdx === '') return;
+    const idx = Number(capituloIdx);
+    const novosCapitulos = story.capitulos.map((c, i) => (i === idx ? { ...c, titulo: revisao.titulo, conteudo: revisao.conteudo } : c));
+    atualizarHistoria(story.id, { capitulos: novosCapitulos, atualizadoEm: new Date().toISOString() });
+    setRevisao(null);
+    setInstrucao('');
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="isf-glass isf-glow rounded-2xl p-6 flex items-center gap-5">
+        <SeloImperial size={56} />
+        <div>
+          <div className="isf-display text-lg text-[#f4e4a6]">Mente Suprema</div>
+          <div className="text-sm text-[#9a958a]">Central estratégica de IA para esta história.</div>
+        </div>
+      </div>
+
+      <div className="isf-glass rounded-2xl p-5 flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+        <div className="isf-display text-xs tracking-widest text-[#d4af37] shrink-0">HISTÓRIA</div>
+        <select value={story.id} onChange={(e) => { setStoryId(e.target.value); setMensagens([]); setRevisao(null); setCapituloIdx(''); }} className="isf-input md:max-w-sm">
+          {stories.map((s) => <option key={s.id} value={s.id}>{s.titulo}</option>)}
+        </select>
+      </div>
+
+      {erro && (
+        <div className="isf-glass rounded-xl p-4 flex items-start gap-3 text-sm" style={{ borderColor: 'rgba(192,88,74,0.4)', color: '#e0a094' }}>
+          <AlertCircle size={16} className="shrink-0 mt-0.5" />
+          <span>{erro}</span>
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        {ACOES_MENTE_SUPREMA.map((acao) => {
+          const Icon = acao.icon;
+          return (
+            <button key={acao.id} onClick={() => executarAcao(acao)} disabled={carregando}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs disabled:opacity-50"
+              style={{ border: '1px solid rgba(212,175,55,0.25)', color: '#d4af37' }}>
+              <Icon size={14} strokeWidth={1.6} /> {acao.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="isf-glass rounded-2xl p-5 space-y-3 max-h-[420px] overflow-y-auto">
+        {mensagens.length === 0 ? (
+          <div className="text-sm text-[#9a958a] flex items-center gap-2"><MessageCircle size={15} /> Use as ações rápidas acima ou faça uma pergunta livre abaixo.</div>
+        ) : (
+          mensagens.map((m, i) => (
+            <div key={i} className="rounded-lg p-3 text-sm leading-relaxed isf-serif"
+              style={{
+                maxWidth
