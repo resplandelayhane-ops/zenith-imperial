@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -676,7 +676,8 @@ input[type=range]::-webkit-slider-thumb{
     <div class="header-logo" onclick="voltarMenu()">◆ NÚCLEO LITERÁRIO</div>
     <div class="header-ia">
       <div class="seletor-ia">
-        <button class="btn-ia on" id="btn-gem" onclick="setIA('gemini')">✦ Gemini 2.5</button>
+        <button class="btn-ia on" id="btn-gem" onclick="setIA('gemini25')">✦ Gemini 2.5</button>
+        <button class="btn-ia" id="btn-gem15" onclick="setIA('gemini15')">✦ Gemini 1.5</button>
         <button class="btn-ia" id="btn-cla" onclick="setIA('claude')">◈ Claude</button>
       </div>
       <div class="hdr-chave">
@@ -1270,10 +1271,16 @@ let iaAtiva='gemini';
 
 function setIA(p){
   iaAtiva=p;
-  document.getElementById('btn-gem').classList.toggle('on',p==='gemini');
+  document.getElementById('btn-gem').classList.toggle('on',p==='gemini25');
+  document.getElementById('btn-gem15').classList.toggle('on',p==='gemini15');
   document.getElementById('btn-cla').classList.toggle('on',p==='claude');
   document.getElementById('inp-chave').value=localStorage.getItem('chv_'+p)||'';
-  document.getElementById('inp-chave').placeholder=p==='gemini'?'Chave do Google AI Studio (Gemini)':'Chave da Anthropic (Claude)';
+  const ph={
+    gemini25:'Chave do Google AI Studio (Gemini 2.5)',
+    gemini15:'Chave do Google AI Studio (Gemini 1.5)',
+    claude:'Chave da Anthropic (Claude)'
+  };
+  document.getElementById('inp-chave').placeholder=ph[p]||'Chave da API';
 }
 function salvarChave(){
   const v=document.getElementById('inp-chave').value.trim();
@@ -1281,7 +1288,22 @@ function salvarChave(){
   localStorage.setItem('chv_'+iaAtiva,v);toast('✅ Chave salva!');
 }
 function chave(){return localStorage.getItem('chv_'+iaAtiva)||'';}
-setIA('gemini');
+setIA('gemini25');
+
+// ── PROXY CLOUDFLARE WORKER ──────────────────
+const PROXY_URL = 'https://icy-haze-0a0e.resplandelayhane.workers.dev';
+
+function urlGemini(k, modelo) {
+  if (PROXY_URL) {
+    return `${PROXY_URL}/gemini/v1beta/models/${modelo}:generateContent?key=${k}`;
+  }
+  return `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${k}`;
+}
+
+function modeloGemini() {
+  if (iaAtiva === 'gemini15') return 'gemini-1.5-flash';
+  return 'gemini-2.5-flash-preview-05-20';
+}
 
 // ═══════════════════════════════════════════
 // CHAMAR IA
@@ -1293,8 +1315,8 @@ async function ia(prompt,idStatus){
     toast('⚠️ Sem chave da API');return'';
   }
   try{
-    if(iaAtiva==='gemini'){
-      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${k}`,{
+    if(iaAtiva==='gemini25'||iaAtiva==='gemini15'){
+      const r=await fetch(urlGemini(k, modeloGemini()),{
         method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:.9,maxOutputTokens:65536}})
       });
@@ -1895,11 +1917,11 @@ Seja audaciosa, específica e visualmente precisa. Uma capa de elite vende o liv
   let res = '';
 
   // Se tem imagem E está usando Gemini → envia como multimodal
-  if (capaImagemBase64 && iaAtiva === 'gemini') {
+  if (capaImagemBase64 && (iaAtiva === 'gemini25' || iaAtiva === 'gemini15')) {
     const k = chave();
     if (!k) { statusEl.innerHTML = '<div class="aviso av-err">⚠️ Insira sua chave da API</div>'; return; }
     try {
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${k}`, {
+      const resp = await fetch(urlGemini(k, modeloGemini()), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
